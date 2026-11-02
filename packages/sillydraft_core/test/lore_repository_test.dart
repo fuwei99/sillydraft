@@ -21,6 +21,69 @@ void main() {
     );
   });
   tearDown(() => repo.close());
+  test('analysis cannot set or clear the author context protection', () async {
+    final pinned = await repo.saveLoreEntry(
+      branchId: novel.activeBranchId,
+      kind: LoreKind.world,
+      name: '规则',
+      content: '旧规则',
+      atChapterId: first.id,
+      data: {'contextRequired': true},
+    );
+    final task = await repo.createTask(
+      branchId: novel.activeBranchId,
+      kind: TaskKind.analysis,
+      input: {
+        'sourceRevisions': [
+          {'chapterId': first.id, 'revisionId': first.revisionId},
+          {'chapterId': later.id, 'revisionId': later.revisionId},
+        ],
+      },
+    );
+    await repo.updateTask(
+      task.id,
+      status: TaskStatus.completed,
+      result: {
+        'entries': [
+          {
+            'kind': 'world',
+            'name': '规则',
+            'content': '新规则',
+            'certainty': 'fact',
+            'sourceChapterId': first.id,
+            'data': {'contextRequired': false},
+          },
+          {
+            'kind': 'world',
+            'name': '新增',
+            'content': '推测',
+            'certainty': 'inference',
+            'sourceChapterId': first.id,
+            'data': {'contextRequired': true},
+          },
+        ],
+      },
+    );
+    final updated = await repo.acceptAnalysisEntry(
+      taskId: task.id,
+      index: 0,
+      targetEntityId: pinned.id,
+      expectedRevisionId: pinned.revisionId,
+    );
+    expect(updated.data['contextRequired'], isTrue);
+    final added = await repo.acceptAnalysisEntry(taskId: task.id, index: 1);
+    expect(added.data['contextRequired'], isNot(true));
+    await expectLater(
+      repo.saveLoreEntry(
+        branchId: novel.activeBranchId,
+        kind: LoreKind.world,
+        name: '无效',
+        content: '',
+        data: {'contextRequired': 'true'},
+      ),
+      throwsFormatException,
+    );
+  });
   test('reviewed relationship uses valid endpoints and refuses evidence beyond its snapshot', () async {
     final a = await repo.saveLoreEntry(
       branchId: novel.activeBranchId,

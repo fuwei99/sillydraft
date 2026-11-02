@@ -211,6 +211,10 @@ extension LoreOperations on StoryRepository {
     Map<String, dynamic> data,
     String? throughChapterId,
   ) async {
+    if (data.containsKey('contextRequired') &&
+        data['contextRequired'] is! bool) {
+      throw const FormatException('写作时必带须为布尔值');
+    }
     if (data['referencePrompt'] case final Object prompt) {
       if (!{LoreKind.character, LoreKind.location}.contains(kind) ||
           prompt is! String ||

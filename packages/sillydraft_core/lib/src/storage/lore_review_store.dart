@@ -115,7 +115,9 @@ extension LoreReviewOperations on StoryRepository {
       data: {
         ...?old?.data,
         if (data['data'] is Map<String, dynamic>)
-          ...data['data'] as Map<String, dynamic>,
+          for (final field in (data['data'] as Map<String, dynamic>).entries)
+            // Context protection belongs to the author, not analysis output.
+            if (field.key != 'contextRequired') field.key: field.value,
         ...?details,
       },
       provenance: {

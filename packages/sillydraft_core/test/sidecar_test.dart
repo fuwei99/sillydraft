@@ -304,6 +304,7 @@ void main() {
         content: '渡口的摆渡人',
         data: {
           'appearance': '短发',
+          'contextRequired': true,
           'images': [portrait.id],
         },
       );
@@ -354,6 +355,7 @@ void main() {
       expect(updated.content, '渡口的摆渡人，雨夜救下落水者');
       expect(updated.data['outfit'], '蓑衣');
       expect(updated.data['appearance'], '短发');
+      expect(updated.data['contextRequired'], isTrue);
       expect(updated.data['images'], [portrait.id]);
       expect(updated.atChapterId, b.chapter.id);
       expect(updated.provenance, {
