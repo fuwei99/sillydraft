@@ -377,6 +377,40 @@ class _RequestState extends ConsumerState<WritingRequestScreen> {
               const SizedBox(height: 8),
               FAccordion(
                 children: [
+                  if (draft.input['loreSelection'] case final Map selection)
+                    FAccordionItem(
+                      title: Text(
+                        '资料选择 · 已带 ${(selection['selected'] as List).length} · 未带 ${(selection['omitted'] as List).length}',
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('标记必带、本次要求点名的资料及其关联端点不会因预算不足被移除。'),
+                            for (final entry in [
+                              ...selection['selected'] as List,
+                              ...selection['omitted'] as List,
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text(
+                                  '${entry['name']} · ${switch (entry['reason']) {
+                                    'pinned' => '必带 · 作者指定',
+                                    'named' => '必带 · 本次要求点名',
+                                    'reference' => '${entry['required'] == true ? '必带' : '已带'} · 关联资料引用',
+                                    'brief' => '已带 · 匹配本次要求',
+                                    'recent' => '已带 · 匹配最近正文',
+                                    'fallback' => '已带 · 无匹配时补充资料',
+                                    'budget' => '未带 · 上下文空间不足',
+                                    _ => '未带 · 本次未匹配',
+                                  }}',
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   FAccordionItem(
                     title: const Text('提示词、顺序与参数'),
                     child: SelectableText(

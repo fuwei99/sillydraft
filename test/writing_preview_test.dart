@@ -1,9 +1,10 @@
-import 'package:drift/drift.dart' hide Column;
+import 'package:drift/drift.dart' hide Column, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sillydraft/app/services.dart';
+import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft/features/agent/writing_request_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
@@ -11,6 +12,98 @@ import 'support/host.dart';
 import 'support/query_gate.dart';
 
 void main() {
+  for (final overflow in [false, true]) {
+    testWidgets('preview explains selection and blocks overflow: $overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final repo = StoryRepository.memory();
+      final services = AppServices(repository: repo, secrets: MemorySecrets());
+      addTearDown(services.close);
+      await services.saveConnection(
+        ModelConnection(
+          id: 'test',
+          name: '测试模型',
+          baseUrl: 'http://localhost:1/v1',
+          model: 'test',
+          contextWindow: 2000,
+          maxOutputTokens: 200,
+        ),
+      );
+      final branch = (await repo.createNovel(title: '预览')).activeBranchId;
+      await repo.saveLoreEntry(
+        branchId: branch,
+        kind: LoreKind.world,
+        name: '禁忌',
+        content: overflow ? '规则' * 3000 : '亡者不能复生',
+        data: {'contextRequired': true},
+      );
+      final person = await repo.saveLoreEntry(
+        branchId: branch,
+        kind: LoreKind.character,
+        name: '林岚',
+        content: '摆渡人',
+      );
+      final other = await repo.saveLoreEntry(
+        branchId: branch,
+        kind: LoreKind.character,
+        name: '陈舟',
+        content: '已失明',
+      );
+      await repo.saveLoreEntry(
+        branchId: branch,
+        kind: LoreKind.relationship,
+        name: '旧盟约',
+        content: '彼此隐瞒真实身份',
+        data: {'fromId': person.id, 'toId': other.id, 'contextRequired': true},
+      );
+      await repo.saveLoreEntry(
+        branchId: branch,
+        kind: LoreKind.world,
+        name: '珊瑚',
+        content: '海底呈紫色',
+      );
+      final chapter = await repo.createChapter(branchId: branch);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [servicesProvider.overrideWithValue(services)],
+          child: testHost(
+            WritingRequestScreen(chapter: chapter, initialBrief: '林岚回家'),
+            brightness: overflow ? Brightness.dark : Brightness.light,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('预览提示词'));
+      await tester.tap(find.text('预览提示词'));
+      await tester.pumpAndSettle();
+      final selection = find.text('资料选择 · 已带 4 · 未带 1');
+      final pageScroll = find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(selection, 180, scrollable: pageScroll);
+      await tester.tap(selection);
+      await tester.pumpAndSettle();
+      expect(find.text('禁忌 · 必带 · 作者指定'), findsOneWidget);
+      expect(find.text('林岚 · 必带 · 本次要求点名'), findsOneWidget);
+      expect(find.text('陈舟 · 必带 · 关联资料引用'), findsOneWidget);
+      expect(find.text('珊瑚 · 未带 · 本次未匹配'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('开始生成'),
+        180,
+        scrollable: pageScroll,
+      );
+      final start = find.widgetWithText(FButton, '开始生成');
+      expect(tester.widget<FButton>(start).onPress == null, overflow);
+      expect(await repo.listTasks(branchId: branch), isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final change in ['brief', 'mode', 'preset']) {
     testWidgets('changing $change during preparation invalidates the preview', (
       tester,

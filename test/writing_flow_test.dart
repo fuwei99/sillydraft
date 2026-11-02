@@ -80,7 +80,16 @@ void main() {
       await tester.tap(find.text('预览提示词'));
       await tester.pumpAndSettle();
       expect(await repo.listTasks(branchId: novel.activeBranchId), isEmpty);
-      await tester.ensureVisible(find.text('开始生成'));
+      await tester.scrollUntilVisible(
+        find.text('开始生成'),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.tap(find.text('开始生成'));
       await tester.pumpAndSettle();
       // Written straight into the chapter, with nothing left to review.
