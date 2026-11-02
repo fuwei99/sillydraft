@@ -62,6 +62,7 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
   bool get _full => _images.length >= maxCharacterImages;
   late LoreKind _kind = widget.entry?.kind ?? widget.kind;
   late LoreCertainty _certainty = widget.entry?.certainty ?? LoreCertainty.fact;
+  late bool _contextRequired = widget.entry?.data['contextRequired'] == true;
   late String? _chapterId = widget.atChapterId ?? widget.entry?.atChapterId,
       _from = widget.entry?.data['fromId'] as String?,
       _to = widget.entry?.data['toId'] as String?;
@@ -124,6 +125,7 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
         deleted: deleted,
         data: {
           ...?widget.entry?.data,
+          'contextRequired': _contextRequired,
           'status': _status,
           if (_kind == LoreKind.character) ...{
             'appearance': _appearance.text,
@@ -509,6 +511,15 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
                   if (v != null) setState(() => _certainty = v);
                 },
               ),
+            ),
+            const SizedBox(height: 16),
+            FSwitch(
+              label: const Text('写作时必带'),
+              description: const Text(
+                '在本章可用时始终放入写作上下文；空间不足会提示调整，不会自动删减。其他资料按本次要求和最近正文选择。',
+              ),
+              value: _contextRequired,
+              onChange: (v) => setState(() => _contextRequired = v),
             ),
             const SizedBox(height: 16),
             AsyncView(

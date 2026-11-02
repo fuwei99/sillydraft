@@ -813,7 +813,7 @@ void main() {
           expect(story.chapters.last.content.text.trim(), isEmpty);
           expect(find.text(story.chapters.last.title), findsWidgets);
         }
-        expect(find.textContaining('的上下文装不下这次写作'), findsOneWidget);
+        expect(find.textContaining('仍超出上下文上限'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );

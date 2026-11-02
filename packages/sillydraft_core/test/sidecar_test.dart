@@ -1017,7 +1017,10 @@ void main() {
         branchId,
         throughChapterId: chapterId,
       )).any((e) => e.sourceStale);
-      expect(got.revisions, [for (final e in lore) e.revisionId]);
+      expect(
+        got.revisions,
+        unorderedEquals([for (final e in lore) e.revisionId]),
+      );
       expect(got.notes.contains('stale_lore'), stale);
       return stale;
     }

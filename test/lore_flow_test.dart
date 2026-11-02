@@ -122,6 +122,40 @@ Finder get _portraitThumbs => find.byWidgetPredicate(
 );
 
 void main() {
+  testWidgets('the author can save, reopen and clear required context', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final services = AppServices(
+      repository: StoryRepository.memory(),
+      secrets: MemorySecrets(),
+    );
+    addTearDown(services.close);
+    final repo = services.repository;
+    final branch = (await repo.createNovel(title: '规则')).activeBranchId;
+    var entry = await repo.saveLoreEntry(
+      branchId: branch,
+      kind: LoreKind.world,
+      name: '禁忌',
+      content: '亡者不能复生',
+    );
+    for (final enabled in [true, false]) {
+      await _openEditor(tester, services, branch, entry);
+      final toggle = find.widgetWithText(FSwitch, '写作时必带');
+      expect(tester.widget<FSwitch>(toggle).value, !enabled);
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('保存资料'));
+      await tester.pumpAndSettle();
+      entry = await repo.getLoreEntry(branchId: branch, id: entry.id);
+      expect(entry.data['contextRequired'], enabled);
+      expect(entry.content, '亡者不能复生');
+    }
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('a location requires and saves its reference description', (
     tester,
   ) async {
