@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:sillydraft_core/sillydraft_core.dart';
@@ -120,6 +121,40 @@ void main() {
       expect(omitted.single['reason'], 'budget');
       expect(jsonEncode(draft.input['request']), contains('亡者不能复生'));
       expect(jsonEncode(draft.input['request']), contains('写渡口'));
+    },
+  );
+
+  test(
+    'budget pruning lets queued events run before preparation completes',
+    () async {
+      final pinned = await lore('禁忌', '亡者不能复生', required: true);
+      for (var i = 0; i < 12; i++) {
+        await lore('档案 $i', '渡口${'旧闻' * 2500}');
+      }
+      final chapter = await repo.createChapter(branchId: branch);
+      var ticks = 0;
+      final timer = Timer.periodic(Duration.zero, (_) => ticks++);
+      late final PreparedWriting draft;
+      try {
+        draft = await service.prepare(
+          branchId: branch,
+          chapterId: chapter.id,
+          connection: connection,
+          brief: '写渡口',
+        );
+      } finally {
+        timer.cancel();
+      }
+      expect(ticks, greaterThan(1));
+      expect(ids(draft), [pinned.id]);
+      expect(draft.canRun, isTrue);
+      final omitted = (draft.input['loreSelection'] as Map)['omitted'] as List;
+      expect(omitted, hasLength(12));
+      expect(omitted.every((entry) => entry['reason'] == 'budget'), isTrue);
+      expect(
+        (draft.compiled['estimatedTokens'] as num) + connection.maxOutputTokens,
+        lessThanOrEqualTo(connection.contextWindow),
+      );
     },
   );
 

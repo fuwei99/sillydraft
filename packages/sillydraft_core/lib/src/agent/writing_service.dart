@@ -304,6 +304,8 @@ final class WritingService {
             connection.maxOutputTokens) -
         connection.contextWindow;
     while (overflow() > 0 && selection.removeLowestPriority()) {
+      // Let UI events run between synchronous recompilations.
+      await Future<void>.delayed(Duration.zero);
       // A single removal can deactivate a large world book entry.
       presetInput = buildInput();
       result = PromptCompiler().compile(presetInput);
