@@ -122,7 +122,7 @@ void main() {
     await _settle(tester);
     bus.broadcast('ping', const []);
     expect(_dispatches(platform.scripts), [
-      'window.__sdDispatch && window.__sdDispatch("ping", []);',
+      'void (window.__sdDispatch && window.__sdDispatch("ping", []));',
     ]);
   });
 
