@@ -325,7 +325,7 @@ void main() {
             'name': '落水者',
             'content': '被林岚救起的陌生人',
             'certainty': 'fact',
-            'appearance': '湿透的长衫',
+            'outfit': '湿透的长衫',
           },
         ]),
       );
@@ -366,6 +366,9 @@ void main() {
       });
       final index = await b.repo.listLore(b.novel.activeBranchId);
       expect(index.map((e) => e.name), ['林岚', '落水者']);
+      final stranger = index.singleWhere((e) => e.name == '落水者');
+      expect(stranger.data['appearance'], isNull);
+      expect(stranger.data['outfit'], '湿透的长衫');
       expect(sidecarIndexEntry(updated, b.chapter.id), {
         'id': lin.id,
         'kind': 'character',

@@ -104,8 +104,15 @@ List<Map<String, dynamic>> _sidecarTools(Set<SidecarDuty> duties) => [
               'type': 'string',
               'enum': [for (final c in LoreCertainty.values) c.name],
             },
-            'appearance': {'type': 'string', 'description': '人物：外貌与辨识特征'},
-            'outfit': {'type': 'string', 'description': '人物：当前服饰'},
+            'appearance': {
+              'type': 'string',
+              'description':
+                  '人物：有依据的可见外貌与辨识特征，不含服饰、性格、情绪或动作。未知时省略以保留已有值，不写默认设定等占位语。',
+            },
+            'outfit': {
+              'type': 'string',
+              'description': '人物：有依据的当前服饰与配饰。未知时省略以保留已有值，不写占位语。',
+            },
             'goal': {'type': 'string', 'description': '人物：动机与目标'},
             'state': {'type': 'string', 'description': '人物：当前状态，如伤势、情绪、处境'},
             'user': {'type': 'boolean', 'description': '人物：是否为主角 {{user}}'},
