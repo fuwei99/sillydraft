@@ -125,7 +125,7 @@ class _LoreState extends ConsumerState<LoreScreen> {
         final entry = entries[i];
         final theme = context.theme;
         final status = loreStatusLabels[entry.data['status']];
-        return FTile(
+        final tile = FTile(
           prefix: Icon(
             entry.sourceStale
                 ? FLucideIcons.history
@@ -165,6 +165,25 @@ class _LoreState extends ConsumerState<LoreScreen> {
           suffix: const Icon(FLucideIcons.chevronRight),
           onPress: () => _edit(entry: entry),
         );
+        if (timeline &&
+            (i == 0 || entries[i - 1].certainty != entry.certainty)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: i == 0 ? 0 : 6, bottom: 12),
+                child: Text(
+                  certaintyLabels[entry.certainty]!,
+                  style: theme.typography.body.md.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              tile,
+            ],
+          );
+        }
+        return tile;
       },
     );
   }
@@ -185,12 +204,31 @@ class _LoreState extends ConsumerState<LoreScreen> {
           for (final (i, s) in (story?.chapters ?? <Chapter>[]).indexed)
             s.id: i,
         };
-        timeline.sort(
-          (a, b) => (positions[a.atChapterId] ?? -1).compareTo(
+        timeline.sort((a, b) {
+          final certainty = a.certainty.index.compareTo(b.certainty.index);
+          if (certainty != 0) return certainty;
+          final chapter = (positions[a.atChapterId] ?? -1).compareTo(
             positions[b.atChapterId] ?? -1,
-          ),
+          );
+          if (chapter != 0) return chapter;
+          final recorded = a.createdAt.compareTo(b.createdAt);
+          return recorded != 0 ? recorded : a.id.compareTo(b.id);
+        });
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Text(
+                '按资料所属章节排序，同章按记录时间排序',
+                style: context.theme.typography.body.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+            ),
+            Expanded(child: _list(timeline, timeline: true, titles: titles)),
+          ],
         );
-        return _list(timeline, timeline: true, titles: titles);
       case 2:
         return RelationshipGraph(
           key: ValueKey(scope),

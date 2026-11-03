@@ -123,7 +123,9 @@ Finder get _portraitThumbs => find.byWidgetPredicate(
 );
 
 void main() {
-  testWidgets('timeline never invents progress', (tester) async {
+  testWidgets('timeline separates speculation and never invents progress', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -191,6 +193,16 @@ void main() {
     expect(find.textContaining('进行中'), findsNothing);
     expect(find.textContaining('已回收'), findsOneWidget);
     expect(find.text('第一日傍晚'), findsOneWidget);
+    expect(find.text('已确认'), findsOneWidget);
+    expect(find.text('创作计划'), findsOneWidget);
+    expect(find.text('尚待证实'), findsOneWidget);
+    const orderedNames = ['交出钥匙', '名字已揭晓', '抵达灯塔', '前往灯塔', '幕后动向'];
+    for (var i = 1; i < orderedNames.length; i++) {
+      expect(
+        tester.getTopLeft(find.text(orderedNames[i - 1])).dy,
+        lessThan(tester.getTopLeft(find.text(orderedNames[i])).dy),
+      );
+    }
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
