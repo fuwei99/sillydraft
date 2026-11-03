@@ -9,6 +9,7 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/app/theme.dart';
 import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft/features/lore/lore_screen.dart';
+import 'package:sillydraft/features/lore/lore_providers.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
 import 'package:sillydraft/features/lore/lore_edit_screen.dart';
@@ -122,6 +123,109 @@ Finder get _portraitThumbs => find.byWidgetPredicate(
 );
 
 void main() {
+  testWidgets('timeline never invents progress', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final services = AppServices(
+      repository: StoryRepository.memory(),
+      secrets: MemorySecrets(),
+    );
+    addTearDown(services.close);
+    final repo = services.repository;
+    final branch = (await repo.createNovel(title: '雾港')).activeBranchId;
+    final first = await repo.createChapter(branchId: branch, title: '交钥匙');
+    final second = await repo.createChapter(branchId: branch, title: '抵达');
+    LoreEntry entry(
+      String name,
+      LoreCertainty certainty,
+      String chapter,
+      int minute, {
+      LoreKind kind = LoreKind.event,
+      Map<String, dynamic> data = const {},
+    }) => LoreEntry(
+      id: name,
+      revisionId: name,
+      branchId: branch,
+      kind: kind,
+      name: name,
+      content: '条目内容',
+      certainty: certainty,
+      atChapterId: chapter,
+      createdAt: DateTime.utc(2026, 11, 3, 0, minute),
+      data: data,
+      provenance: const {},
+    );
+    final entries = [
+      entry('前往灯塔', LoreCertainty.plan, first.id, 0),
+      entry('幕后动向', LoreCertainty.inference, first.id, 0),
+      entry('抵达灯塔', LoreCertainty.fact, second.id, 0),
+      entry(
+        '名字已揭晓',
+        LoreCertainty.fact,
+        first.id,
+        2,
+        kind: LoreKind.foreshadow,
+        data: {'status': 'resolved'},
+      ),
+      entry(
+        '交出钥匙',
+        LoreCertainty.fact,
+        first.id,
+        1,
+        data: {'storyTime': '第一日傍晚'},
+      ),
+    ];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          servicesProvider.overrideWithValue(services),
+          loreProvider.overrideWith((ref, scope) async => entries),
+        ],
+        child: _app(LoreScreen(branchId: branch)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('时间线'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('进行中'), findsNothing);
+    expect(find.textContaining('已回收'), findsOneWidget);
+    expect(find.text('第一日傍晚'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  for (final kind in [LoreKind.event, LoreKind.foreshadow]) {
+    testWidgets('editing ${kind.name} does not invent an active status', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final services = AppServices(
+        repository: StoryRepository.memory(),
+        secrets: MemorySecrets(),
+      );
+      addTearDown(services.close);
+      final repo = services.repository;
+      final branch = (await repo.createNovel(title: '雾港')).activeBranchId;
+      final entry = await repo.saveLoreEntry(
+        branchId: branch,
+        kind: kind,
+        name: '钥匙',
+        content: '钥匙已经交出',
+      );
+      await _openEditor(tester, services, branch, entry);
+      await tester.ensureVisible(find.text('保存资料'));
+      await tester.tap(find.text('保存资料'));
+      await tester.pumpAndSettle();
+      final saved = await repo.getLoreEntry(branchId: branch, id: entry.id);
+      expect(saved.data['status'], isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
   testWidgets('the author can save, reopen and clear required context', (
     tester,
   ) async {

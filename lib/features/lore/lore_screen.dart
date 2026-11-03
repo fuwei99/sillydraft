@@ -124,6 +124,7 @@ class _LoreState extends ConsumerState<LoreScreen> {
       itemBuilder: (context, i) {
         final entry = entries[i];
         final theme = context.theme;
+        final status = loreStatusLabels[entry.data['status']];
         return FTile(
           prefix: Icon(
             entry.sourceStale
@@ -142,7 +143,7 @@ class _LoreState extends ConsumerState<LoreScreen> {
             children: [
               const SizedBox(height: 4),
               Text(
-                '${loreLabels[entry.kind]} · ${certaintyLabels[entry.certainty]}${entry.deleted ? ' · 已归档' : ''}${entry.sourceStale ? ' · 待复核' : ''}${timeline ? ' · ${loreStatusLabels[entry.data['status']] ?? '进行中'}' : ''}${entry.provenance['type'] == 'sidecar' ? ' · ${switch (titles[entry.provenance['chapterId']]) {
+                '${loreLabels[entry.kind]} · ${certaintyLabels[entry.certainty]}${entry.deleted ? ' · 已归档' : ''}${entry.sourceStale ? ' · 待复核' : ''}${timeline && status != null ? ' · $status' : ''}${entry.provenance['type'] == 'sidecar' ? ' · ${switch (titles[entry.provenance['chapterId']]) {
                         final String t => '$t · ',
                         _ => '',
                       }}旁路整理' : ''}',

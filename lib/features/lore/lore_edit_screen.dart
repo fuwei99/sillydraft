@@ -66,7 +66,7 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
   late String? _chapterId = widget.atChapterId ?? widget.entry?.atChapterId,
       _from = widget.entry?.data['fromId'] as String?,
       _to = widget.entry?.data['toId'] as String?;
-  late String _status = widget.entry?.data['status'] as String? ?? 'active';
+  late String? _status = widget.entry?.data['status'] as String?;
   late bool _directed = widget.entry?.data['directed'] != false;
   bool _busy = false, _rechecked = false;
   final _routingCancellation = GenerationCancellation();
@@ -126,7 +126,8 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
         data: {
           ...?widget.entry?.data,
           'contextRequired': _contextRequired,
-          'status': _status,
+          if (_kind == LoreKind.foreshadow && _status != null)
+            'status': _status,
           if (_kind == LoreKind.character) ...{
             'appearance': _appearance.text,
             'goal': _goal.text,
@@ -620,13 +621,12 @@ class _LoreEditState extends ConsumerState<LoreEditScreen> {
             if (_kind == LoreKind.foreshadow) ...[
               FSelect<String>(
                 label: const Text('伏笔状态'),
+                hint: '未标注',
                 items: {
                   for (final e in loreStatusLabels.entries) e.value: e.key,
                 },
                 control: FSelectControl<String>.lifted(
-                  value: loreStatusLabels.containsKey(_status)
-                      ? _status
-                      : 'active',
+                  value: loreStatusLabels.containsKey(_status) ? _status : null,
                   onChange: (v) {
                     if (v != null) setState(() => _status = v);
                   },
