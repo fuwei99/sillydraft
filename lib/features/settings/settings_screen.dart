@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show MaterialPageRoute, SelectableText;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/library_host.dart';
 import '../../app/services.dart';
@@ -401,6 +402,35 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ],
+              const SizedBox(height: 24),
+              FTileGroup(
+                children: [
+                  FTile(
+                    key: const Key('settings-privacy-policy'),
+                    prefix: const Icon(FLucideIcons.shieldCheck),
+                    title: const Text('隐私政策'),
+                    subtitle: _wrapped('了解本地作品、模型服务和导入资源如何处理数据'),
+                    suffix: const Icon(FLucideIcons.externalLink),
+                    onPress: () async {
+                      final url = Uri.parse(
+                        'https://github.com/moonrailgun/sillydraft/blob/main/docs/privacy-policy.md',
+                      );
+                      var opened = false;
+                      try {
+                        opened = await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } catch (_) {
+                        // Use the same visible error for an unavailable launcher.
+                      }
+                      if (!opened && context.mounted) {
+                        showError(context, '无法打开隐私政策：$url');
+                      }
+                    },
+                  ),
+                ],
+              ),
               const SizedBox(height: 32),
               const FDivider(),
               const SizedBox(height: 8),

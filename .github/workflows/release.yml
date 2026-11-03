@@ -154,3 +154,9 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - run: gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+
+  ios-app-store:
+    needs: publish
+    if: vars.IOS_APP_STORE_ENABLED == 'true'
+    uses: ./.github/workflows/ios-app-store.yml
+    secrets: inherit

@@ -28,7 +28,7 @@ ST 对照数据可在核心包目录使用 Node 22 重新生成：`node tool/cap
 
 HTML 界面渲染依赖 `webview_flutter`（Android 需要 SDK 24+，iOS 13+，macOS 10.15+），Windows/Linux 没有对应平台实现，应用在这两个平台显示源码。真实网页视图只能在原生运行时验证：`flutter test integration_test/html_render_test.dart -d macos`。
 
-`.github/workflows/verify.yml` 提供核心/界面/服务端测试、三个桌面系统构建、iOS 模拟器及 Android 构建，在分支推送和 PR 上运行。Actions 固定提交，Flutter 固定版本；工作流不包含上传商店步骤，不读取模型密钥。推送到用户自己的 GitHub 仓库后才会运行；工作流文件不代表 CI 已通过。发布版本见下文“发布”。
+`.github/workflows/verify.yml` 提供核心/界面/服务端测试、三个桌面系统构建、iOS 模拟器及 Android 构建，在分支推送和 PR 上运行。Actions 固定提交，Flutter 固定版本；验证工作流不包含上传商店步骤，不读取模型密钥。iOS 商店上传由独立的 `ios-app-store.yml` 负责，见 [iOS App Store 发布](ios-app-store.md)。工作流文件不代表 CI 已通过。发布版本见下文“发布”。
 
 ## Android
 
@@ -122,8 +122,9 @@ tag 触发 `.github/workflows/release.yml`：
 
 1. 调用 `verify.yml` 跑完整测试与构建；与下面的打包同时进行。发布提交推送到分支时 `verify.yml` 跳过，测试只在这里跑一遍。
 2. 校验 tag 与 pubspec 版本一致，创建草稿 Release，说明为上个 tag 以来的提交标题与安装提示。
-3. 并行构建并上传 `sillydraft-<版本>-android.apk`（只含 arm64-v8a；三种 ABI 合打时原生库未压缩，约 85 MB，仅 arm64 约 32 MB）、`-macos.zip`、`-windows-x64.zip`（含 VC++ 运行库）、`-linux-x64.tar.gz`。iOS 需要证书，不出包。
+3. 并行构建并上传 `sillydraft-<版本>-android.apk`（只含 arm64-v8a；三种 ABI 合打时原生库未压缩，约 85 MB，仅 arm64 约 32 MB）、`-macos.zip`、`-windows-x64.zip`（含 VC++ 运行库）、`-linux-x64.tar.gz`。iOS 不放入公开 Release。
 4. 测试通过且所有平台打包成功后转为正式发布。任一失败时 Release 停在草稿，应用的更新检查看不到它；修复后在 Actions 里重跑失败的任务即可（上传会覆盖同名文件）。
+5. 配置 Apple Secrets 且仓库变量 `IOS_APP_STORE_ENABLED=true` 时，正式发布后再调用 iOS 工作流，签名、归档并上传 App Store Connect / TestFlight，正式提审手动确认。iOS 失败不会撤回已发布的其他平台包；首次配置和重传规则见 [iOS App Store 发布](ios-app-store.md)。也可手动运行 iOS 工作流。
 
 Android 签名需在仓库 Settings → Secrets and variables → Actions 中配置：
 

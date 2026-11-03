@@ -57,3 +57,4 @@ android/key.properties
 *.keystore
 *.p12
 *.mobileprovision
+*.p8
