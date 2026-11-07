@@ -35,6 +35,28 @@ SillyDraft 把**写作、阅读、AI 助手、故事资料和插画**放在同�
 
 **正文有版本，改稿有退路。** AI 写作完成后会自动写入正文并保留历史；如果生成期间你修改了正文或故事变量，结果会保留为“未写入的正文”，等待处理，不覆盖新稿。删除助手对话也不会删除作品正文。
 
+## 界面预览
+
+| 桌面工作台 | 续写方向 |
+| :---: | :---: |
+| ![桌面工作台：章节目录与小说正文](docs/screenshots/desktop-workspace.png) | ![章节结尾的三个续写方向](docs/screenshots/story-directions.png) |
+| 章节目录与正文并排，随时切换阅读与编辑。 | 选择接着写，或从当前章节另开一条故事线。 |
+
+| 故事分支 | 世界设定 |
+| :---: | :---: |
+| ![故事分支树：北上、留在白塔和前往王都等走向](docs/screenshots/story-branches.png) | ![故事资料页面：七座烽火等世界设定条目](docs/screenshots/world-building.png) |
+| 保留不同选择，切换故事线、比较版本。 | 分类管理人物、设定、组织、地点与伏笔。 |
+
+| 正文插画 |
+| :---: |
+| ![小说正文中嵌入的场景插画，与上下文一起展示](docs/screenshots/story-illustration.png) |
+| 为故事配上插画，插入正文，边读边看。 |
+
+| 手机阅读 · 浅色 | 手机阅读 · 深色 |
+| :---: | :---: |
+| <img src="docs/screenshots/mobile-reading-light.png" alt="手机浅色阅读界面：纸色背景与底部阅读工具" width="280"> | <img src="docs/screenshots/mobile-reading-dark.png" alt="手机深色阅读界面：深色背景与底部阅读工具" width="280"> |
+| 纸色背景，配合章节导航与书签。 | 深色主题，支持自动滚动与阅读样式设置。 |
+
 ## 开始使用
 
 ### 1. 安装应用
