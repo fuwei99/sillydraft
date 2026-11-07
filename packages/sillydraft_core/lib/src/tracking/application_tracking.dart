@@ -9,6 +9,7 @@ final class ApplicationTracking {
     required this.applicationId,
     required this.os,
     required this.language,
+    required this.version,
   }) : _client = Dio(
          BaseOptions(
            baseUrl: serverUrl.replaceFirst(RegExp(r'/+$'), ''),
@@ -23,6 +24,7 @@ final class ApplicationTracking {
 
   static ApplicationTracking? current;
   final String applicationId, os, language;
+  final Future<String> version;
   // This client must never have the application's API interceptor.
   final Dio _client;
   final _queue = <Map<String, Object?>>[];
@@ -94,10 +96,29 @@ final class ApplicationTracking {
   }
 
   Future<void> _send() async {
+    final String appVersion;
+    try {
+      appVersion = _limit((await version).trim(), 50);
+      if (appVersion.isEmpty) {
+        _queue.clear();
+        return;
+      }
+    } catch (_) {
+      _queue.clear();
+      return;
+    }
     while (!_disposed && _queue.isNotEmpty) {
       final batch = List<Map<String, Object?>>.of(_queue);
       _queue.clear();
       try {
+        // New sessions (including IP changes) need the version on every payload.
+        for (final event in batch) {
+          final payload = event['payload'] as Map<String, Object?>;
+          payload['version'] = appVersion;
+          if (event['type'] == 'identify') {
+            (payload['data'] as Map<String, Object?>)['version'] = appVersion;
+          }
+        }
         await _client.post<void>(
           '/api/application/batch',
           data: {'events': batch},

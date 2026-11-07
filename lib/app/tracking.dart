@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -19,19 +18,13 @@ void initializeApplicationTracking() {
       applicationId: tianjiApplicationId,
       os: Platform.operatingSystem,
       language: PlatformDispatcher.instance.locale.toLanguageTag(),
+      version: PackageInfo.fromPlatform()
+          .then((info) => info.version)
+          .timeout(const Duration(seconds: 3), onTimeout: () => '')
+          .catchError((Object _) => ''),
     );
     installTrackingErrorHandlers();
     tracking.identify({'os': Platform.operatingSystem});
-    unawaited(
-      PackageInfo.fromPlatform()
-          .then((info) {
-            tracking.identify({
-              'os': Platform.operatingSystem,
-              'version': info.version,
-            });
-          })
-          .catchError((Object _) {}),
-    );
   } catch (_) {
     // App startup does not depend on telemetry or platform metadata.
   }
