@@ -63,6 +63,11 @@ class _TransferState extends ConsumerState<TransferScreen> {
             );
       if (!mounted) return;
       final saved = await ref.read(transferFilesProvider).save(context, file);
+      if (saved) {
+        ApplicationTracking.current?.event('Story Exported', {
+          'format': format?.name ?? 'backup',
+        });
+      }
       if (mounted) setState(() => _message = saved ? '已交给系统保存或分享' : '已取消保存');
     } catch (e) {
       if (mounted) showError(context, e);

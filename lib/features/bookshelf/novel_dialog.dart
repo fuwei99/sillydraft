@@ -67,6 +67,9 @@ class _NovelDialogState extends ConsumerState<NovelDialog> {
           pointOfView: _pointOfView,
           chapterNumerals: _numerals,
         );
+        ApplicationTracking.current?.event('Story Created', {
+          'source': 'blank',
+        });
         await repo.createChapter(branchId: result.activeBranchId);
       } else {
         result = old.copyWith(

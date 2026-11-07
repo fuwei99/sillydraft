@@ -346,6 +346,9 @@ class _NovelImportState extends ConsumerState<NovelImportScreen> {
             ),
             pointOfView: _pov,
           );
+      ApplicationTracking.current?.event('Story Created', {
+        'source': 'manuscript',
+      });
       if (mounted) {
         Navigator.pushReplacement(
           context,

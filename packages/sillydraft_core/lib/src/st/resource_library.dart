@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:uuid/uuid.dart';
 
+import '../tracking/application_tracking.dart';
 import '../model/resource.dart';
 import '../storage/story_repository.dart';
 import 'card_importer.dart';
@@ -112,7 +113,7 @@ final class ResourceLibrary {
       secretKey: SecretKey(key),
       aad: utf8.encode(id),
     );
-    return repository.storeResource(
+    final resource = await repository.storeResource(
       id: id,
       kind: kind,
       name: preview.name,
@@ -122,6 +123,13 @@ final class ResourceLibrary {
       encryptedSource: box.concatenation(),
       parentId: parentId,
     );
+    if (parentId == null) {
+      ApplicationTracking.current?.event('Resource Imported', {
+        'kind': kind.name,
+        'count': 1,
+      });
+    }
+    return resource;
   }
 
   /// Imports [bytes] unless the very same file was imported before, in which

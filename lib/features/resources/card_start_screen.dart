@@ -222,6 +222,7 @@ class _CardStartState extends ConsumerState<CardStartScreen> {
         openingOverride: _edited ? _opening.text : null,
         openingClock: _openingClock,
       );
+      ApplicationTracking.current?.event('Story Created', {'source': 'card'});
       final story = await repo.getStory(novel.activeBranchId);
       final preview = _preview;
       if (preview != null &&

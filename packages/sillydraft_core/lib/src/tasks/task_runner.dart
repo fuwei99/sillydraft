@@ -26,6 +26,7 @@ import '../st/regex_pipeline.dart';
 import '../st/world_book_engine.dart';
 import '../st/world_book.dart';
 import '../storage/story_repository.dart';
+import '../tracking/application_tracking.dart';
 
 part 'agent_runner.dart';
 part 'agent_compaction.dart';
@@ -180,6 +181,7 @@ final class TaskRunner implements TaskControl {
         ? task.input['conversationId'] as String?
         : null;
     final previous = _agentTails[conversation];
+    final started = Stopwatch()..start();
     final future = _executeQueued(task, cancel, previous);
     if (conversation != null) {
       // Cancelling a waiting turn must not let its successor skip the head.
@@ -199,9 +201,27 @@ final class TaskRunner implements TaskControl {
         _running.remove(task.id);
         _cancellations.remove(task.id);
         _progress.remove(task.id);
+        unawaited(_trackFinished(task.id, started.elapsedMilliseconds));
       }),
     );
     return task;
+  }
+
+  Future<void> _trackFinished(String id, int duration) async {
+    final tracking = ApplicationTracking.current;
+    if (tracking == null) return;
+    try {
+      final task = await repository.getTask(id, snapshots: false);
+      if (!task.isActive) {
+        tracking.event('Generation Finished', {
+          'kind': task.kind.name,
+          'status': task.status.name,
+          'duration': duration,
+        });
+      }
+    } catch (_) {
+      // Closing the library must not wait for telemetry.
+    }
   }
 
   Future<void> _executeQueued(
