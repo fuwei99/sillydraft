@@ -1,5 +1,5 @@
 // Regenerate the platform icons: flutter test tool/generate_icons.dart
-// Uses the PNG export of assets/branding/logo.svg; no fonts are required.
+// Uses the PNG export of assets/branding/logo.svg.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -13,6 +13,7 @@ Future<Uint8List> icon(
   int size, {
   bool rounded = false,
   double inset = 12,
+  bool debug = false,
 }) async {
   final recorder = ui.PictureRecorder();
   final canvas = ui.Canvas(recorder)..scale(size / 256);
@@ -30,6 +31,32 @@ Future<Uint8List> icon(
         : const ui.Rect.fromLTWH(0, 0, 256, 256),
     ui.Paint()..filterQuality = ui.FilterQuality.high,
   );
+  if (debug) {
+    canvas.drawRRect(
+      ui.RRect.fromRectAndRadius(
+        const ui.Rect.fromLTWH(38, 167, 180, 57),
+        const ui.Radius.circular(12),
+      ),
+      ui.Paint()..color = const ui.Color(0xffffa000),
+    );
+    final label = raster.Image(width: 360, height: 114, numChannels: 4);
+    raster.drawString(
+      label,
+      'DEBUG',
+      font: raster.arial48,
+      color: raster.ColorRgba8(36, 19, 0, 255),
+    );
+    final codec = await ui.instantiateImageCodec(raster.encodePng(label));
+    final text = (await codec.getNextFrame()).image;
+    canvas.drawImageRect(
+      text,
+      const ui.Rect.fromLTWH(0, 0, 360, 114),
+      const ui.Rect.fromLTWH(38, 167, 180, 57),
+      ui.Paint()..filterQuality = ui.FilterQuality.high,
+    );
+    codec.dispose();
+    text.dispose();
+  }
   final picture = recorder.endRecording();
   final image = await picture.toImage(size, size);
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -43,6 +70,34 @@ Future<Uint8List> icon(
 }
 
 void main() {
+  testWidgets('regenerate macOS debug icons', (tester) async {
+    await tester.runAsync(() async {
+      final codec = await ui.instantiateImageCodec(
+        await File('assets/branding/logo.png').readAsBytes(),
+      );
+      final source = (await codec.getNextFrame()).image;
+      codec.dispose();
+      addTearDown(source.dispose);
+      const directory = 'macos/Runner/Assets.xcassets/AppIconDebug.appiconset';
+      await Directory(directory).create(recursive: true);
+      final manifest = await File(
+        'macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json',
+      ).readAsString();
+      final preview = raster.decodePng(
+        await icon(source, 256, rounded: true, inset: 25, debug: true),
+      )!;
+      expect(preview.getPixel(0, 0).a, 0);
+      expect(preview.getPixel(45, 190).r, 255);
+      expect(preview.getPixel(45, 190).g, 160);
+      for (final size in [16, 32, 64, 128, 256, 512, 1024]) {
+        await File('$directory/app_icon_$size.png').writeAsBytes(
+          await icon(source, size, rounded: true, inset: 25, debug: true),
+        );
+      }
+      await File('$directory/Contents.json').writeAsString(manifest);
+    });
+  });
+
   testWidgets('regenerate native application icons from the approved logo', (
     tester,
   ) async {
