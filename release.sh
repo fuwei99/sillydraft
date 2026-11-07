@@ -67,8 +67,8 @@ fi
 ! git rev-parse -q --verify "refs/tags/${tag}" >/dev/null || die "tag ${tag} 已存在"
 
 echo "发布 ${name}+${build} → ${next}+${next_build}（分支 ${branch}，tag ${tag}）"
-read -rp "确认发布并推送？[y/N] " ok
-[[ ${ok} == [yY] ]] || die "已取消"
+read -rp "确认发布并推送？[Y/n] " ok
+[[ ${ok:-y} == [yY] ]] || die "已取消"
 
 sed -i.bak -E "s/^version: .*/version: $next+$next_build/" pubspec.yaml
 rm pubspec.yaml.bak
