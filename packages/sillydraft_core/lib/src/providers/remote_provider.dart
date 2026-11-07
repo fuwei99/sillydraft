@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import '../st/import_types.dart';
+import '../tracking/api_tracking.dart';
 import 'image_provider.dart';
 import 'provider.dart';
 
@@ -28,6 +29,7 @@ final class RemoteRunnerClient {
            followRedirects: false,
          ),
        ) {
+    trackApplicationApi(_dio);
     if (accessToken.isEmpty ||
         accessToken.length > 1024 ||
         accessToken.contains(RegExp(r'[\r\n]'))) {

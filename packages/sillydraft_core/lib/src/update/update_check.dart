@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
+import '../tracking/api_tracking.dart';
+
 /// A newer published release than the running app.
 final class UpdateInfo {
   const UpdateInfo({
@@ -52,6 +54,7 @@ Future<UpdateInfo?> checkForUpdate({
       validateStatus: (status) => status == 200 || status == 404,
     ),
   );
+  trackApplicationApi(client, path: '/repos/[owner]/[repo]/releases/latest');
   try {
     final Response<Object?> response;
     try {

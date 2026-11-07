@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../tracking/api_tracking.dart';
 import 'image_provider.dart';
 import 'provider.dart';
 
@@ -22,7 +23,9 @@ final class OpenAIImageProvider implements ImageProvider {
                receiveTimeout: const Duration(minutes: 10),
                followRedirects: false,
              ),
-           );
+           ) {
+    trackApplicationApi(_client);
+  }
   @override
   final ModelConnection config;
   final String _apiKey;
@@ -203,6 +206,7 @@ final class OpenAIImageProvider implements ImageProvider {
             followRedirects: false,
           ),
         );
+        trackApplicationApi(download, path: '/[image]');
         try {
           final result = await download.get<ResponseBody>(
             uri.toString(),

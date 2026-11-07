@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import '../model/story.dart';
+import '../tracking/api_tracking.dart';
 import '../storage/story_repository.dart';
 import 'project_backup.dart';
 import 'project_snapshot.dart';
@@ -32,6 +33,7 @@ final class HttpSnapshotTransport implements SnapshotTransport {
     Dio? dio,
   }) : _dio = dio ?? Dio(),
        _authorization = authorization {
+    trackApplicationApi(_dio, path: '/[snapshot]');
     if (!['http', 'https'].contains(url.scheme) ||
         url.host.isEmpty ||
         url.userInfo.isNotEmpty ||

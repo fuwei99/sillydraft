@@ -4,6 +4,7 @@ import 'dart:io' show stderr;
 
 import 'package:dio/dio.dart';
 
+import '../tracking/api_tracking.dart';
 import '../model/usage.dart';
 import '../st/import_types.dart' show CompatibilityDiagnostic;
 import '../st/world_book_engine.dart' show estimateTokens;
@@ -46,7 +47,9 @@ final class StPriceBook {
               receiveTimeout: const Duration(seconds: 20),
               followRedirects: false,
             ),
-          );
+          ) {
+    trackApplicationApi(_client);
+  }
   final Map<String, StPricing> sources;
   final Dio _client;
   final _lists = <String, Future<Map<String, ModelPrice>>>{};

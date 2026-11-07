@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../tracking/api_tracking.dart';
 import '../transfer/safe_archive.dart';
 import 'image_provider.dart';
 import 'provider.dart';
@@ -17,7 +18,9 @@ final class NovelAIImageProvider implements ImageProvider {
           receiveTimeout: const Duration(minutes: 10),
           followRedirects: false,
         ),
-      );
+      ) {
+    trackApplicationApi(_client);
+  }
 
   @override
   final ModelConnection config;

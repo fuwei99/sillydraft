@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:uuid/uuid.dart';
 
+import '../tracking/api_tracking.dart';
 import '../agent/skills.dart';
 import '../assets/asset_library.dart';
 import '../model/persona.dart';
@@ -124,10 +125,13 @@ final class ShareTicket {
 /// The payload [link] points to, fetched over its pinned certificate.
 Future<SharePayload> fetchShare(ReceiveLink link) async {
   final client = pinnedClient(link.fingerprint);
+  final started = Stopwatch()..start();
+  int? status;
   try {
     final request = await client.getUrl(link.endpoint)
       ..followRedirects = false;
     final response = await request.close();
+    status = response.statusCode;
     final json = jsonDecode(await utf8.decodeStream(response));
     if (response.statusCode != 200 || json is! Map<String, dynamic>) {
       throw FormatException(
@@ -136,6 +140,12 @@ Future<SharePayload> fetchShare(ReceiveLink link) async {
     }
     return SharePayload.fromJson(json);
   } finally {
+    reportApplicationApi(
+      'GET',
+      '/v1/share/[token]',
+      status,
+      started.elapsedMilliseconds,
+    );
     client.close(force: true);
   }
 }

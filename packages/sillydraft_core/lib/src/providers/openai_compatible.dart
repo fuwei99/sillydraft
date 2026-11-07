@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../tracking/api_tracking.dart';
 import '../st/import_types.dart';
 import 'provider.dart';
 import 'sse.dart';
@@ -84,7 +85,9 @@ final class OpenAICompatibleProvider implements ModelProvider {
                receiveTimeout: const Duration(seconds: 120),
                followRedirects: false,
              ),
-           );
+           ) {
+    trackApplicationApi(_client);
+  }
   @override
   final ModelConnection config;
   final String _apiKey;

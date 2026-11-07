@@ -6,6 +6,7 @@ import 'dart:io';
 // ignore: experimental_member_use
 import 'package:drift/remote.dart';
 
+import '../tracking/api_tracking.dart';
 import '../providers/provider.dart';
 import '../storage/story_repository.dart';
 import 'links.dart';
@@ -289,17 +290,32 @@ Future<HttpClientResponse> _send(
   List<int>? bytes,
   GenerationCancellation? cancellation,
 }) async {
-  final request = await client.openUrl(method, link.endpoint(path))
-    ..followRedirects = false;
-  request.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${link.key}');
-  // Hanging up is how the desktop learns a call was cancelled.
-  cancellation?.onCancel(() => request.abort(const GenerationCancelled()));
-  if (json != null) {
-    request.headers.contentType = ContentType.json;
-    request.add(utf8.encode(jsonEncode(json)));
-  } else if (bytes != null) {
-    request.headers.contentType = ContentType.binary;
-    request.add(bytes);
+  final started = Stopwatch()..start();
+  int? status;
+  try {
+    final request = await client.openUrl(method, link.endpoint(path))
+      ..followRedirects = false;
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${link.key}');
+    // Hanging up is how the desktop learns a call was cancelled.
+    cancellation?.onCancel(() => request.abort(const GenerationCancelled()));
+    if (json != null) {
+      request.headers.contentType = ContentType.json;
+      request.add(utf8.encode(jsonEncode(json)));
+    } else if (bytes != null) {
+      request.headers.contentType = ContentType.binary;
+      request.add(bytes);
+    }
+    final response = await request.close();
+    status = response.statusCode;
+    return response;
+  } finally {
+    if (cancellation?.isCancelled != true) {
+      reportApplicationApi(
+        method,
+        applicationApiPath(path),
+        status,
+        started.elapsedMilliseconds,
+      );
+    }
   }
-  return request.close();
 }

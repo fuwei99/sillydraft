@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../tracking/api_tracking.dart';
 import 'comfy_workflow.dart';
 import 'image_provider.dart';
 import 'provider.dart';
@@ -21,7 +22,9 @@ final class ComfyUIProvider implements ImageProvider, WorkflowSource {
           receiveTimeout: const Duration(minutes: 2),
           followRedirects: false,
         ),
-      );
+      ) {
+    trackApplicationApi(_client);
+  }
 
   @override
   final ModelConnection config;
