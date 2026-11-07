@@ -58,6 +58,7 @@ class SettingsScreen extends ConsumerWidget {
     };
     final version = ref.watch(appVersionProvider).value;
     final updates = ref.watch(servicesProvider).updateEndpoint != null;
+    final availableUpdate = ref.watch(availableUpdateProvider);
     final autoUpdate =
         ref.watch(settingProvider('update')).value?['auto'] != false;
     final theme = context.theme;
@@ -377,10 +378,25 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     FTile(
                       key: const Key('settings-check-update'),
-                      prefix: const Icon(FLucideIcons.refreshCw),
-                      title: const Text('检查更新'),
-                      subtitle: _wrapped('从 GitHub Releases 获取新版本，下载后手动安装'),
-                      onPress: () => checkUpdates(context, ref, manual: true),
+                      prefix: Icon(
+                        availableUpdate == null
+                            ? FLucideIcons.refreshCw
+                            : FLucideIcons.download,
+                      ),
+                      title: _wrapped(
+                        availableUpdate == null
+                            ? '检查更新'
+                            : '更新至 ${availableUpdate.version}',
+                      ),
+                      subtitle: _wrapped(
+                        availableUpdate == null
+                            ? '从 GitHub Releases 获取新版本，下载后手动安装'
+                            : '查看更新说明并下载，下载后手动安装',
+                      ),
+                      suffix: availableUpdate == null
+                          ? null
+                          : FBadge(child: const Text('新版')),
+                      onPress: () => openUpdates(context, ref),
                     ),
                     FTile(
                       key: const Key('settings-auto-update'),

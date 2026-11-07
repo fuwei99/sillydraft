@@ -110,6 +110,11 @@ void main() {
     await tester.pumpAndSettle();
     await capture('update-settings');
 
+    // The persistent entry reopens the cached release without a request.
+    await tester.tap(find.byKey(const Key('settings-check-update')));
+    await waitFor(find.text('发现新版本 0.2.0'));
+    await tester.tap(find.text('跳过此版本'));
+    await tester.pumpAndSettle();
     latest = 'v0.1.0';
     await tester.tap(find.byKey(const Key('settings-check-update')));
     await waitFor(find.text('已是最新版本'));

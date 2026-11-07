@@ -14,10 +14,39 @@ final appVersionProvider = FutureProvider<PackageInfo>(
   (_) => PackageInfo.fromPlatform(),
 );
 
+/// Keep an offer across restarts, but never reuse another platform's package
+/// or an offer checked against a different installed version.
+final availableUpdateProvider = Provider<UpdateInfo?>((ref) {
+  if (ref.watch(servicesProvider).updateEndpoint == null) return null;
+  final current = ref.watch(appVersionProvider).value?.version;
+  final check = ref.watch(settingProvider('updateCheck')).value;
+  final skipped = ref.watch(settingProvider('update')).value?['skip'];
+  if (current == null ||
+      check?['current'] != current ||
+      check?['platform'] != Platform.operatingSystem) {
+    return null;
+  }
+  if (check?['available']
+      case {
+        'version': final String version,
+        'notes': final String notes,
+        'downloadUrl': final String downloadUrl,
+        'pageUrl': final String pageUrl,
+      }
+      when version != skipped) {
+    return UpdateInfo(
+      version: version,
+      notes: notes,
+      downloadUrl: downloadUrl,
+      pageUrl: pageUrl,
+    );
+  }
+  return null;
+});
+
 /// `update` holds the author's choices: `auto` (absent means on) and `skip`
-/// (a dismissed version). The checker writes only `updateCheck.at` (epoch ms
-/// of the last successful check), so it never overwrites a choice made while
-/// a request was in flight.
+/// (a dismissed version). Check results live separately in `updateCheck`, so
+/// a request never overwrites a choice made while it was in flight.
 Future<void> setAutoUpdateCheck(StoryRepository repository, bool value) async =>
     repository.setSetting('update', {
       ...?await repository.getSetting('update'),
@@ -25,6 +54,21 @@ Future<void> setAutoUpdateCheck(StoryRepository repository, bool value) async =>
     });
 
 var _checking = false;
+
+/// Reopen a known offer without a request; otherwise check manually.
+Future<void> openUpdates(BuildContext context, WidgetRef ref) async {
+  final info = ref.read(availableUpdateProvider);
+  if (info == null) return checkUpdates(context, ref, manual: true);
+  if (_checking) return;
+  final repository = ref.read(repositoryProvider);
+  final current = ref.read(appVersionProvider).value!.version;
+  _checking = true;
+  try {
+    await _offer(context, repository, info, current);
+  } finally {
+    _checking = false;
+  }
+}
 
 /// Looks for a newer release and offers it. The automatic check runs at most
 /// once a day, stays silent on failure and honours “跳过此版本”; a [manual]
@@ -48,26 +92,40 @@ Future<void> checkUpdates(
   _checking = true;
   try {
     final setting = await repository.getSetting('update') ?? {};
-    final last = (await repository.getSetting('updateCheck'))?['at'];
+    if (!manual && setting['auto'] == false) return;
+    final check = await repository.getSetting('updateCheck');
+    final last = check?['at'];
     final now = DateTime.now().millisecondsSinceEpoch;
-    // A last check "in the future" means the clock moved back; check again.
-    if (!manual &&
-        (setting['auto'] == false ||
-            last is int &&
-                now >= last &&
-                now - last < Duration.millisecondsPerDay)) {
-      return;
-    }
     final String current;
     final UpdateInfo? info;
     try {
       current = (await version).version;
+      // A changed installation or a clock rollback needs a fresh check.
+      if (!manual &&
+          check?['current'] == current &&
+          check?['platform'] == Platform.operatingSystem &&
+          last is int &&
+          now >= last &&
+          now - last < Duration.millisecondsPerDay) {
+        return;
+      }
       info = await checkForUpdate(
         current: current,
         platform: Platform.operatingSystem,
         endpoint: endpoint,
       );
-      await repository.setSetting('updateCheck', {'at': now});
+      await repository.setSetting('updateCheck', {
+        'at': now,
+        'current': current,
+        'platform': Platform.operatingSystem,
+        if (info != null)
+          'available': {
+            'version': info.version,
+            'notes': info.notes,
+            'downloadUrl': info.downloadUrl,
+            'pageUrl': info.pageUrl,
+          },
+      });
     } catch (e) {
       if (manual && context.mounted) {
         showError(context, switch (e) {
