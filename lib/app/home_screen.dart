@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/bookshelf/bookshelf_screen.dart';
 import '../features/resources/resource_library_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/update/update_prompt.dart';
 import 'widgets.dart';
 import 'task_activity.dart';
 
@@ -12,12 +13,6 @@ import 'task_activity.dart';
 abstract final class HomeTab {
   static const shelf = 0, resources = 1, settings = 2;
 }
-
-const _destinations = <NavDestination>[
-  (icon: FLucideIcons.libraryBig, label: '作品', badge: 0),
-  (icon: FLucideIcons.folderOpen, label: '资源', badge: 0),
-  (icon: FLucideIcons.settings, label: '设置', badge: 0),
-];
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
@@ -54,6 +49,12 @@ class _HomeState extends ConsumerState<HomeScreen> {
     );
     _visited.add(selectedIndex);
     final wide = MediaQuery.sizeOf(context).width >= 900;
+    final update = ref.watch(availableUpdateProvider);
+    final destinations = <NavDestination>[
+      (icon: FLucideIcons.libraryBig, label: '作品', badge: 0),
+      (icon: FLucideIcons.folderOpen, label: '资源', badge: 0),
+      (icon: FLucideIcons.settings, label: '设置', badge: update != null ? 1 : 0),
+    ];
     return PopScope(
       canPop: selectedIndex == HomeTab.shelf && !active,
       onPopInvokedWithResult: (didPop, _) {
@@ -68,7 +69,7 @@ class _HomeState extends ConsumerState<HomeScreen> {
             ? AppSidebar(
                 selectedIndex: selectedIndex,
                 onSelect: widget.onDestinationSelected,
-                destinations: _destinations,
+                destinations: destinations,
                 header: const _Brand(),
                 footerCount: 1,
               )
@@ -78,12 +79,12 @@ class _HomeState extends ConsumerState<HomeScreen> {
             : AppBottomBar(
                 selectedIndex: selectedIndex,
                 onSelect: widget.onDestinationSelected,
-                destinations: _destinations,
+                destinations: destinations,
               ),
         child: IndexedStack(
           index: selectedIndex,
           children: [
-            for (var i = 0; i < _destinations.length; i++)
+            for (var i = 0; i < destinations.length; i++)
               if (_visited.contains(i))
                 TickerMode(
                   enabled: selectedIndex == i,

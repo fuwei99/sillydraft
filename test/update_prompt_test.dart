@@ -8,6 +8,7 @@ import 'package:forui/forui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sillydraft/app/home_screen.dart';
 import 'package:sillydraft/app/services.dart';
+import 'package:sillydraft/app/widgets.dart' show AppBottomBar;
 import 'package:sillydraft/features/settings/settings_screen.dart';
 import 'package:sillydraft/features/update/update_prompt.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
@@ -304,6 +305,35 @@ void main() {
     await recheck(tester);
     expect(find.text('更新至 0.2.0'), findsNothing);
   });
+
+  testWidgets(
+    'phone settings badge survives later and clears when the release is skipped',
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+    (tester) async {
+      await open(
+        tester,
+        endpoint: await serve(tester),
+        home: true,
+        size: const Size(390, 844),
+      );
+      int badge() => tester
+          .widget<AppBottomBar>(find.byType(AppBottomBar))
+          .destinations[HomeTab.settings]
+          .badge;
+      expect(badge(), 0);
+      expect(find.byKey(const Key('desktop-update')), findsNothing);
+      await checkNow(tester);
+      await tester.tap(find.text('稍后'));
+      await tester.pumpAndSettle();
+      expect(badge(), 1);
+      expect(find.text('更新至 0.2.0'), findsOneWidget);
+
+      await checkNow(tester);
+      await tester.tap(find.text('跳过此版本'));
+      await settleUpdates(tester);
+      expect(badge(), 0);
+    },
+  );
 
   testWidgets(
     'cached update is hidden after installing the offered version',
