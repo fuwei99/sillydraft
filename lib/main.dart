@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/services.dart';
 import 'app/theme.dart';
+import 'app/tracking.dart';
 import 'app/widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  initializeApplicationTracking();
   try {
     runApp(SillyDraftApp(services: await AppServices.open()));
   } catch (error) {

@@ -115,6 +115,7 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
       }
       if (!mounted) return AppExitResponse.cancel;
       await ref.read(servicesProvider).flushDrafts();
+      unawaited(ApplicationTracking.current?.flush());
       return AppExitResponse.exit;
     } catch (e) {
       _error(e);
@@ -170,6 +171,11 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(ApplicationTracking.current?.flush());
+    }
     if (state == AppLifecycleState.resumed) unawaited(_awake.refresh());
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
