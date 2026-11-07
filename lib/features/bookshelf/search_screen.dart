@@ -130,6 +130,11 @@ class _SearchState extends ConsumerState<GlobalSearchScreen> {
                           onPress: () => Navigator.push(
                             context,
                             MaterialPageRoute<void>(
+                              settings: RouteSettings(
+                                name: match.chapter == null
+                                    ? '/stories/[id]'
+                                    : null,
+                              ),
                               builder: (_) => match.chapter == null
                                   ? NovelWorkspace(novelId: match.novel.id)
                                   : EditorScreen(chapter: match.chapter!),

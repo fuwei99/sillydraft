@@ -163,6 +163,7 @@ class _SyncState extends ConsumerState<ProjectSyncScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute<void>(
+              settings: const RouteSettings(name: '/stories/[id]'),
               builder: (_) => NovelWorkspace(novelId: novel.id),
             ),
           );
@@ -455,6 +456,9 @@ class SyncConflictComparison extends ConsumerWidget {
                         onPress: () => Navigator.push(
                           context,
                           MaterialPageRoute<void>(
+                            settings: const RouteSettings(
+                              name: '/stories/[id]',
+                            ),
                             builder: (_) =>
                                 NovelWorkspace(novelId: story.novel.id),
                           ),

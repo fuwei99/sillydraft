@@ -25,6 +25,7 @@ import 'screen_awake.dart';
 import 'services.dart';
 import 'task_activity.dart';
 import 'theme.dart';
+import 'tracking.dart';
 import 'widgets.dart' show confirmAction, showError;
 
 class SillyDraftApp extends StatefulWidget {
@@ -74,6 +75,7 @@ class _App extends ConsumerStatefulWidget {
 
 class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
   final _navigator = GlobalKey<NavigatorState>();
+  final _tracking = ApplicationRouteObserver();
   late final ScreenAwake _awake;
   Future<AppExitResponse>? _exitRequest;
   int _selectedDestination = 0;
@@ -81,6 +83,7 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
   void _selectDestination(int index) {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _selectedDestination = index);
+    _tracking.setHomeTab(index);
   }
 
   void _error(Object error) {
@@ -144,7 +147,18 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
           AppCommand.resources => const ResourceLibraryScreen(),
           _ => const SettingsScreen(),
         };
-        await navigator.push(MaterialPageRoute<void>(builder: (_) => screen));
+        await navigator.push(
+          MaterialPageRoute<void>(
+            settings: RouteSettings(
+              name: switch (command) {
+                AppCommand.search => null,
+                AppCommand.resources => '/resources',
+                _ => '/settings',
+              },
+            ),
+            builder: (_) => screen,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) _error(e);
@@ -195,6 +209,7 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
     final mode = ref.watch(settingProvider('appearance')).value?['mode'];
     return MaterialApp(
       navigatorKey: _navigator,
+      navigatorObservers: [_tracking],
       builder: (context, child) => mui.Theme(
         data: materialUiTheme(Theme.brightnessOf(context)),
         child: FTheme(

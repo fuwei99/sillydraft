@@ -270,6 +270,7 @@ class _CardStartState extends ConsumerState<CardStartScreen> {
         unawaited(
           navigator.pushReplacement(
             MaterialPageRoute<void>(
+              settings: const RouteSettings(name: '/stories/[id]'),
               builder: (_) => NovelWorkspace(novelId: novel.id),
             ),
           ),

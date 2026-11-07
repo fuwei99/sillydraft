@@ -113,7 +113,10 @@ Future<void> showNovelStart(BuildContext context) => showAppSheet<void>(
 
 void _openWorkspace(BuildContext context, Novel novel) => Navigator.push(
   context,
-  MaterialPageRoute<void>(builder: (_) => NovelWorkspace(novelId: novel.id)),
+  MaterialPageRoute<void>(
+    settings: const RouteSettings(name: '/stories/[id]'),
+    builder: (_) => NovelWorkspace(novelId: novel.id),
+  ),
 );
 
 Future<void> startBlankNovel(BuildContext context) async {
@@ -347,6 +350,7 @@ class _NovelImportState extends ConsumerState<NovelImportScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute<void>(
+            settings: const RouteSettings(name: '/stories/[id]'),
             builder: (_) => NovelWorkspace(novelId: novel.id),
           ),
         );

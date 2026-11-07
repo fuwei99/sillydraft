@@ -118,6 +118,9 @@ class _CandidateState extends ConsumerState<CandidateScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute<void>(
+                                    settings: const RouteSettings(
+                                      name: '/stories/[id]',
+                                    ),
                                     builder: (_) =>
                                         NovelWorkspace(novelId: branch.novelId),
                                   ),

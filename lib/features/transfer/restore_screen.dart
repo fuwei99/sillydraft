@@ -67,6 +67,7 @@ class _RestoreState extends ConsumerState<RestoreBackupScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute<void>(
+            settings: const RouteSettings(name: '/stories/[id]'),
             builder: (_) => NovelWorkspace(novelId: novel.id),
           ),
         );

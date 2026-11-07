@@ -57,3 +57,35 @@ void installTrackingErrorHandlers() {
     return handled;
   };
 }
+
+/// Track route identity as well as its pattern: two stories share a name.
+class ApplicationRouteObserver extends NavigatorObserver {
+  Route<dynamic>? _top, _home, _reportedRoute;
+  String _homeTab = '/shelf';
+  String? _reportedName;
+
+  @override
+  void didChangeTop(Route<dynamic> topRoute, Route<dynamic>? previousTopRoute) {
+    _top = topRoute;
+    if (topRoute.settings.name == '/') _home = topRoute;
+    _report();
+  }
+
+  void setHomeTab(int index) {
+    _homeTab = const ['/shelf', '/resources', '/settings'][index];
+    _report();
+  }
+
+  void _report() {
+    final route = _top;
+    if (route is! PageRoute) return; // Dialogs do not replace the focused page.
+    final name = identical(route, _home) ? _homeTab : route.settings.name;
+    if (name == null ||
+        (identical(route, _reportedRoute) && name == _reportedName)) {
+      return;
+    }
+    _reportedRoute = route;
+    _reportedName = name;
+    ApplicationTracking.current?.screenView(name);
+  }
+}

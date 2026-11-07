@@ -43,7 +43,10 @@ class _BookshelfState extends ConsumerState<BookshelfScreen> {
 
   void _open(Novel novel) => Navigator.push(
     context,
-    MaterialPageRoute<void>(builder: (_) => NovelWorkspace(novelId: novel.id)),
+    MaterialPageRoute<void>(
+      settings: const RouteSettings(name: '/stories/[id]'),
+      builder: (_) => NovelWorkspace(novelId: novel.id),
+    ),
   );
   Future<void> _delete(Novel novel) async {
     final yes = await confirmAction(
