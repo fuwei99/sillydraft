@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show AppExitResponse;
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -226,7 +226,9 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
           ),
         ),
       ),
-      title: 'SillyDraft',
+      title: kDebugMode && defaultTargetPlatform == TargetPlatform.macOS
+          ? 'SillyDraft Debug'
+          : 'SillyDraft',
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'CN'),
       supportedLocales: const [Locale('zh', 'CN'), Locale('en')],

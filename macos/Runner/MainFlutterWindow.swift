@@ -25,7 +25,7 @@ class MainFlutterWindow: NSWindow {
     let windowFrame = self.frame
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
-    self.title = "SillyDraft"
+    self.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "SillyDraft"
     self.minSize = NSSize(width: 480, height: 540)
     self.setFrameAutosaveName("SillyDraftWorkspace")
     if !self.setFrameUsingName("SillyDraftWorkspace") {

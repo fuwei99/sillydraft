@@ -60,6 +60,8 @@ flutter build macos --release
 flutter run -d macos
 ```
 
+macOS Debug 构建名为 `SillyDraft Debug.app`，图标带橙色 `DEBUG` 标记，应用标识为 `com.moonrailgun.sillydraft.debug`。Release/Profile 保留 `SillyDraft.app` 与 `com.moonrailgun.sillydraft`。两者使用各自的 Application Support 目录（作品库、密钥和配置），可同时运行；已有数据留在原目录供 Release 使用，Debug 首次启动是空作品库，不自动迁移。可把 Release 产物复制到 `/Applications/SillyDraft.app`，开发时继续运行 `flutter run -d macos`。重新生成调试图标：`flutter test tool/generate_icons.dart --plain-name 'regenerate macOS debug icons'`。
+
 本机验证为 Xcode 26.4.1 / iOS 26.4 模拟器 / macOS arm64。真机 iOS 与 `flutter build ipa --release` 需要发布者设置 Team、证书和 provisioning。macOS 对外分发还需 Developer ID 签名及公证；本地构建不等于公证包。
 
 macOS 在 `macos/Runner/Info.plist` 中设置 `FLTEnableImpeller=false`，使用 Skia（Metal），绕过 Flutter 3.47.7 下运行期间部分中文字形变成噪点或条纹的问题。这个设置需要重新构建并重启应用，热重载不生效；不影响 iOS 和 Android。升级 Flutter 后，先验证长文滚动、字体切换和反复进入阅读页，再考虑恢复 Impeller。

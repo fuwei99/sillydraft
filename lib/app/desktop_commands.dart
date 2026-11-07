@@ -68,7 +68,7 @@ class DesktopCommands extends StatelessWidget {
       content = PlatformMenuBar(
         menus: [
           PlatformMenu(
-            label: 'SillyDraft',
+            label: kDebugMode ? 'SillyDraft Debug' : 'SillyDraft',
             menus: [
               const PlatformProvidedMenuItem(
                 type: PlatformProvidedMenuItemType.about,
