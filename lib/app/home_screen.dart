@@ -5,6 +5,8 @@ import '../features/bookshelf/bookshelf_screen.dart';
 import '../features/resources/resource_library_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/update/update_prompt.dart';
+import 'services.dart';
+import 'theme.dart';
 import 'widgets.dart';
 import 'task_activity.dart';
 
@@ -50,10 +52,18 @@ class _HomeState extends ConsumerState<HomeScreen> {
     _visited.add(selectedIndex);
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final update = ref.watch(availableUpdateProvider);
+    final desktopUpdate =
+        wide &&
+        !touchPlatform &&
+        ref.watch(servicesProvider).updateEndpoint != null;
     final destinations = <NavDestination>[
       (icon: FLucideIcons.libraryBig, label: '作品', badge: 0),
       (icon: FLucideIcons.folderOpen, label: '资源', badge: 0),
-      (icon: FLucideIcons.settings, label: '设置', badge: update != null ? 1 : 0),
+      (
+        icon: FLucideIcons.settings,
+        label: '设置',
+        badge: update != null && !desktopUpdate ? 1 : 0,
+      ),
     ];
     return PopScope(
       canPop: selectedIndex == HomeTab.shelf && !active,
@@ -72,6 +82,29 @@ class _HomeState extends ConsumerState<HomeScreen> {
                 destinations: destinations,
                 header: const _Brand(),
                 footerCount: 1,
+                footer: desktopUpdate
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: FButton(
+                          key: const Key('desktop-update'),
+                          variant: update == null
+                              ? FButtonVariant.outline
+                              : FButtonVariant.primary,
+                          prefix: Icon(
+                            update == null
+                                ? FLucideIcons.refreshCw
+                                : FLucideIcons.download,
+                          ),
+                          onPress: () => openUpdates(context, ref),
+                          child: Flexible(
+                            child: Text(
+                              update == null ? '检查更新' : '新版本 ${update.version}',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      )
+                    : null,
               )
             : null,
         footer: wide

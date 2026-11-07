@@ -236,7 +236,7 @@ void main() {
   });
 
   testWidgets(
-    'settings reopens a cached release after remount and a throttled check',
+    'desktop update entry stays at bottom left and reopens the cached release',
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
     (tester) async {
       var requests = 0;
@@ -246,26 +246,29 @@ void main() {
         home: true,
         size: const Size(1280, 900),
       );
-      final entry = find.byKey(const Key('settings-check-update'));
+      final entry = find.byKey(const Key('desktop-update'));
       expect(entry, findsOneWidget);
+      final bounds = tester.getRect(entry);
+      expect(bounds.right, lessThanOrEqualTo(200));
+      expect(bounds.top, greaterThan(700));
 
-      await checkNow(tester);
+      await checkNow(tester, key: 'desktop-update');
       await tester.tap(find.text('稍后'));
       await tester.pumpAndSettle();
-      expect(find.text('更新至 0.2.0'), findsOneWidget);
+      expect(find.text('新版本 0.2.0'), findsOneWidget);
 
       // Recreate the provider scope: the daily throttle must not hide an offer.
       await tester.pumpWidget(const SizedBox());
       await mount(tester, services, home: true);
-      expect(find.text('更新至 0.2.0'), findsOneWidget);
+      expect(find.text('新版本 0.2.0'), findsOneWidget);
       await recheck(tester);
       expect(requests, 1);
-      await checkNow(tester);
+      await checkNow(tester, key: 'desktop-update');
       expect(find.text('发现新版本 0.2.0'), findsOneWidget);
       expect(requests, 1);
       await tester.tap(find.text('跳过此版本'));
       await settleUpdates(tester);
-      expect(find.text('更新至 0.2.0'), findsNothing);
+      expect(find.text('新版本 0.2.0'), findsNothing);
       expect(entry, findsOneWidget);
     },
   );
@@ -354,6 +357,7 @@ void main() {
         buildSignature: '',
       );
       await mount(tester, services, home: true);
+      expect(find.text('新版本 0.2.0'), findsNothing);
       expect(find.text('更新至 0.2.0'), findsNothing);
     },
   );

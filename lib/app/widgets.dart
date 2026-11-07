@@ -807,6 +807,7 @@ class AppSidebar extends StatelessWidget {
     required this.onSelect,
     required this.destinations,
     this.header,
+    this.footer,
     this.footerCount = 0,
     this.width = 200,
   });
@@ -816,6 +817,7 @@ class AppSidebar extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final List<NavDestination> destinations;
   final Widget? header;
+  final Widget? footer;
   final int footerCount;
   final double width;
 
@@ -877,7 +879,15 @@ class AppSidebar extends StatelessWidget {
         ),
       ),
       header: header,
-      footer: footerCount > 0 ? _group(split, destinations.length) : null,
+      footer: footerCount > 0 || footer != null
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (footerCount > 0) _group(split, destinations.length),
+                ?footer,
+              ],
+            )
+          : null,
       children: [_group(0, split)],
     );
   }
