@@ -86,6 +86,8 @@ macOS、iOS 模拟器、Android 模拟器已有原生构建与操作证据。Win
 
 远程部署见 [执行器文档](server/README.md)。同步服务与模型执行器是不同接口：同步端点需要支持强 ETag 和条件 PUT，不能随意填写普通文件分享链接。
 
+应用统计的范围、隐私字段与控制台验证步骤见 [Tianji 接入说明](docs/application-tracking.md)。
+
 ## 参考
 
 - [SillyTavern 固定源码](https://github.com/SillyTavern/SillyTavern/tree/06bde939fb1e9c4c8d8641d810f0a916b5bce127)
