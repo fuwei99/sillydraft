@@ -61,7 +61,7 @@ Vue 使用酒馆助手相同的 runtime-only 构建，供已编译组件使用�
 | `triggerSlash` | 见下表 |
 | `toastr.*` | 提示条；`alert`/`confirm`/`prompt` 由网页视图回调弹出对话框 |
 | `getCharData` | 角色卡字段（不含 `tavern_helper` 和 `regex_scripts` 扩展） |
-| `SillyTavern.getContext()` | `chat`、`name1`、`name2`、`chatId`、`characters`、`eventSource`、`substituteParams`；`generate()` 提交输入框中的续写要求 |
+| `SillyTavern` / `SillyTavern.getContext()` | 已支持字段也可直接从全局对象读取，如 `chat`、`name1`、`name2`、`chatId`、`characters`、`chatMetadata`、`eventSource`、`substituteParams`；每次访问全局对象都取最新上下文，同固定版本的 `src/iframe/predefine.js`。`generate()` 提交输入框中的续写要求 |
 | `#send_textarea` / `#send_but` | 隐藏的兼容输入框与发送按钮；赋值、`input`/`change`、点击发送直接续写下一章，同轮事件合并，空白不触发；整页 `document.open/write/close` 后恢复节点与监听，不丢失待确认的续写请求 |
 | `Mvu` | `getMvuData`/`replaceMvuData`/`getMvuVariable`/`setMvuVariable` 读写变量；`parseMessage` 和 `reloadInitVar` 通过宿主调用内置 MVU 核心，范围见 [MVU 验证](mvu.md)；不是任意社区脚本执行环境 |
 | `generate`/`generateRaw`、世界书、预设、正则、音频、脚本库接口 | 不支持；`generate` 返回拒绝的 Promise，其他为未定义 |
@@ -109,6 +109,7 @@ Slash 命令（管道 `|`、`\|` 转义、引号内不拆分、`{{pipe}}`）：
 | `integration_test/html_libraries_test.dart`（macOS） | 真实 WKWebView：Zod 校验、YAML 往返、showdown、Vue / VueRouter、jQuery UI / Touch Punch、Tailwind 初始及动态样式、按钮与原生桥接往返；另测 `document.open/write/close` 后的相同行为。通道回复使用本地测试桩，不调用模型 |
 | `integration_test/ejs_template_test.dart`（macOS） | 真实 WKWebView：异步 EJS、print、原样输出、编译选项、语法诊断、上下文与事件、变量继承 / schema / JSON、保存回执 / 失败重试、整页重写；持久化回执使用本地测试桩 |
 | `integration_test/tavern_input_test.dart`（macOS） | 真实 WKWebView：输入赋值 / 事件 / 发送合并、失败重试、片段隔离，整页重写后恢复宿主样式 / 输入监听并完成原有待确认请求 |
+| `integration_test/tavern_context_test.dart`（macOS） | 真实 WKWebView：直接读取用户角色名后初始化 MVU，消息与聊天变量均写入实际姓名；保留 `getContext()`，消息修改后直接读取最新 `chat` / `chatMetadata`。持久化回执使用本地测试桩 |
 | `integration_test/html_height_test.dart`（macOS） | 真实 WKWebView：`details` 和带过渡动画的 `max-height` 面板各反复展开、收起两轮，外层高度从 660px 回到 60px |
 
 2026-10-13 结果：核心 143 项、界面 68 项通过；macOS 真实网页视图集成测试结果见下文“运行记录”。真实角色卡《道渊》v5.4.2 的开场为完整 HTML 页面（烟花画布、`min-height: 100vh`、`getChatMessages`/`setChatMessage`/`triggerSlash` 兜底），其备用开场经角色卡正则变成角色创建界面，提交时执行 `/sys … | /cut N | /trigger`；两种结构都在上述测试中以缩减样本覆盖。这是当时的验证范围：尚未内置 Zod 和 MVU 解析，未运行道渊工坊等社区脚本；当前已内置的能力见上表，不把当时结果当作当前整卡验证。
