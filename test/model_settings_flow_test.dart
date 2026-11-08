@@ -30,7 +30,7 @@ Future<AppServices> openSettings(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [servicesProvider.overrideWithValue(services)],
-      child: testHost(const SettingsScreen()),
+      child: testHost(const SettingsScreen(initialTab: SettingsTab.models)),
     ),
   );
   await tester.pumpAndSettle();
@@ -115,7 +115,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [servicesProvider.overrideWithValue(services)],
-        child: testHost(const SettingsScreen()),
+        child: testHost(const SettingsScreen(initialTab: SettingsTab.models)),
       ),
     );
     await tester.pumpAndSettle();
@@ -155,7 +155,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [servicesProvider.overrideWithValue(services)],
-        child: testHost(const SettingsScreen()),
+        child: testHost(const SettingsScreen(initialTab: SettingsTab.models)),
       ),
     );
     await tester.pumpAndSettle();
@@ -206,7 +206,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [servicesProvider.overrideWithValue(services)],
-        child: testHost(const SettingsScreen()),
+        child: testHost(const SettingsScreen(initialTab: SettingsTab.models)),
       ),
     );
     await tester.pumpAndSettle();
@@ -331,7 +331,12 @@ void main() {
       ),
       findsOneWidget,
     );
+    await tester.tap(find.text('创作'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('旁路整理'));
     expect(find.textContaining('默认关闭'), findsOneWidget);
+    await tester.tap(find.text('模型'));
+    await tester.pumpAndSettle();
     await tester.tap(analysis);
     await tester.pumpAndSettle();
     await tester.tap(find.text('我的模型 · first').last);
@@ -343,6 +348,8 @@ void main() {
       find.descendant(of: analysis, matching: find.text('我的模型 · first')),
       findsOneWidget,
     );
+    await tester.tap(find.text('创作'));
+    await tester.pumpAndSettle();
     expect(find.text('默认开启：已选资料整理模型「我的模型 · first」，整理用它。'), findsOneWidget);
   });
 
@@ -368,6 +375,12 @@ void main() {
           child: testHost(WritingRequestScreen(chapter: chapter)),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('模型设置'));
+      await tester.pumpAndSettle();
+      expect(find.text('添加连接').hitTestable(), findsOneWidget);
+      expect(find.text('外观'), findsNothing);
+      await tester.tap(find.byType(AppBackButton));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('writing-model')));
       await tester.pumpAndSettle();

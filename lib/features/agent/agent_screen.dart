@@ -795,7 +795,9 @@ class _AgentState extends ConsumerState<AgentPanel> {
   void _openSettings() {
     Navigator.push(
       context,
-      MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => const SettingsScreen(initialTab: SettingsTab.models),
+      ),
     );
   }
 

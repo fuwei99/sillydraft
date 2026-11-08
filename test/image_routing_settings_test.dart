@@ -43,7 +43,7 @@ void main() {
           ProviderScope(
             overrides: [servicesProvider.overrideWithValue(services)],
             child: testHost(
-              const SettingsScreen(),
+              const SettingsScreen(initialTab: SettingsTab.models),
               brightness: width == 390 ? Brightness.light : Brightness.dark,
             ),
           ),

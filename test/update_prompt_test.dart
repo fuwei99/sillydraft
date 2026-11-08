@@ -27,7 +27,7 @@ void main() {
   );
 
   // HTTP completion invalidates providers outside the widget test's fake
-  // clock. Pump both zones until the repository reads have caught up.
+  // clock. Pump both zones until all tabs' repository reads have caught up.
   Future<void> settleUpdates(WidgetTester tester) async {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(SettingsScreen)),
@@ -35,9 +35,13 @@ void main() {
     await tester.runAsync(() async {
       for (var i = 0; i < 50; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 20));
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 20));
         if (!container.read(settingProvider('updateCheck')).isLoading &&
-            !container.read(settingProvider('update')).isLoading) {
+            !container.read(settingProvider('update')).isLoading &&
+            find
+                .byType(FCircularProgress, skipOffstage: false)
+                .evaluate()
+                .isEmpty) {
           break;
         }
       }
@@ -84,22 +88,15 @@ void main() {
                   onDestinationSelected: (_) {},
                   onExitRequested: () async {},
                 )
-              : const SettingsScreen(),
+              : const SettingsScreen(initialTab: SettingsTab.about),
         ),
       ),
     );
     await settleUpdates(tester);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('settings-version')),
-      300,
-      scrollable: find
-          .descendant(
-            of: find.byType(SettingsScreen),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.pumpAndSettle();
+    if (home) {
+      await tester.tap(find.text('关于'));
+      await tester.pumpAndSettle();
+    }
   }
 
   Future<AppServices> open(

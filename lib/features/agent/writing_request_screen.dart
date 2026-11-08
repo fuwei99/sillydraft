@@ -315,7 +315,9 @@ class _RequestState extends ConsumerState<WritingRequestScreen> {
                     await Navigator.push(
                       context,
                       MaterialPageRoute<void>(
-                        builder: (_) => const SettingsScreen(),
+                        builder: (_) => const SettingsScreen(
+                          initialTab: SettingsTab.models,
+                        ),
                       ),
                     );
                     if (mounted) await _loadModels();

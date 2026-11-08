@@ -73,7 +73,9 @@ void main() {
           await tester.pumpWidget(
             ProviderScope(
               overrides: [servicesProvider.overrideWithValue(services)],
-              child: testHost(const SettingsScreen()),
+              child: testHost(
+                const SettingsScreen(initialTab: SettingsTab.creation),
+              ),
             ),
           );
           await tester.pumpAndSettle();

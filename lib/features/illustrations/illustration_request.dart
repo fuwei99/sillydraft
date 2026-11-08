@@ -413,7 +413,10 @@ class _RequestState extends ConsumerState<IllustrationRequestScreen> {
           onPress: () async {
             await Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    const SettingsScreen(initialTab: SettingsTab.models),
+              ),
             );
             if (mounted) _load();
           },

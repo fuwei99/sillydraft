@@ -41,10 +41,29 @@ Future<SharePayload> _shareConnection(
 Text _wrapped(String text) =>
     Text(text, overflow: TextOverflow.visible, softWrap: true);
 
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+enum SettingsTab {
+  general('通用'),
+  models('模型'),
+  creation('创作'),
+  about('关于');
+
+  const SettingsTab(this.label);
+  final String label;
+}
+
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key, this.initialTab = SettingsTab.general});
+  final SettingsTab initialTab;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late SettingsTab _tab = widget.initialTab;
+
+  @override
+  Widget build(BuildContext context) {
     final remote = ref.watch(servicesProvider).remote;
     final appearance = ref.watch(settingProvider('appearance')).value;
     final html = ref.watch(settingProvider('html')).value;
@@ -68,427 +87,472 @@ class SettingsScreen extends ConsumerWidget {
     final renderHtml = html?['render'] != false;
     void setHtml(bool value) =>
         ref.read(repositoryProvider).setSetting('html', {'render': value});
-    return PageScaffold(
-      title: '设置',
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return ListView(
-            // Center the content while keeping the scrollbar at the page edge.
-            padding: EdgeInsets.symmetric(
-              horizontal: 24 + max(0.0, (constraints.maxWidth - 800) / 2),
-              vertical: 24,
-            ),
-            children: [
-              if (remote != null) ...[
-                FTileGroup(
-                  children: [
-                    FTile(
-                      key: const Key('settings-remote'),
-                      prefix: const Icon(FLucideIcons.monitor),
-                      title: Text('正在使用桌面：${remote.hello.name}'),
-                      subtitle: _wrapped('作品、资料和模型都来自这台桌面电脑'),
-                      suffix: FButton(
-                        variant: FButtonVariant.outline,
-                        mainAxisSize: MainAxisSize.min,
-                        onPress: () => switchLibrary(context, ref, null),
-                        child: const Text('切回本机'),
-                      ),
-                    ),
-                  ],
+    final sections = <SettingsTab, List<Widget>>{
+      SettingsTab.general: [
+        Text(
+          '让工具适合你的写作方式',
+          style: theme.typography.body.xl2.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text('外观', style: heading),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final entry in const {
+              'system': '跟随系统',
+              'light': '浅色',
+              'dark': '深色',
+            }.entries)
+              ChoicePill(
+                label: entry.value,
+                icon: switch (entry.key) {
+                  'light' => FLucideIcons.sun,
+                  'dark' => FLucideIcons.moon,
+                  _ => FLucideIcons.sunMoon,
+                },
+                selected: (appearance?['mode'] ?? 'system') == entry.key,
+                onPress: () => ref.read(repositoryProvider).setSetting(
+                  'appearance',
+                  {'mode': entry.key},
                 ),
-                const SizedBox(height: 24),
-              ],
-              Text(
-                '让工具适合你的写作方式',
-                style: theme.typography.body.xl2.copyWith(
+              ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        FTileGroup(
+          children: [
+            FTile(
+              key: const Key('settings-html'),
+              prefix: const Icon(FLucideIcons.codeXml),
+              title: _wrapped('渲染正文中的 HTML 界面'),
+              subtitle: _wrapped(
+                '角色卡开场、状态栏等 html 代码块在隔离的网页视图里显示，并提供酒馆助手风格的接口（消息、变量、/send 等）。预设填入酒馆输入框的文本会直接用于续写下一章。页面只能通过 HTTPS 联网，不能跳转或读文件。关闭后按源码显示。',
+              ),
+              suffix: FSwitch(value: renderHtml, onChange: setHtml),
+              onPress: () => setHtml(!renderHtml),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        if (!isPhone && remote == null)
+          FTileGroup(
+            children: [
+              FTile(
+                key: const Key('settings-hosting'),
+                prefix: const Icon(FLucideIcons.smartphone),
+                title: const Text('手机连接'),
+                subtitle: _wrapped('让手机扫码使用这台电脑的作品库和模型'),
+                suffix: const Icon(FLucideIcons.chevronRight),
+                onPress: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const HostingScreen(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+      SettingsTab.models: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '模型连接',
+                style: theme.typography.body.lg.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 24),
-              Text('外观', style: heading),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final entry in const {
-                    'system': '跟随系统',
-                    'light': '浅色',
-                    'dark': '深色',
-                  }.entries)
-                    ChoicePill(
-                      label: entry.value,
-                      icon: switch (entry.key) {
-                        'light' => FLucideIcons.sun,
-                        'dark' => FLucideIcons.moon,
-                        _ => FLucideIcons.sunMoon,
-                      },
-                      selected: (appearance?['mode'] ?? 'system') == entry.key,
-                      onPress: () => ref.read(repositoryProvider).setSetting(
-                        'appearance',
-                        {'mode': entry.key},
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              FTileGroup(
-                children: [
-                  FTile(
-                    key: const Key('settings-html'),
-                    prefix: const Icon(FLucideIcons.codeXml),
-                    title: _wrapped('渲染正文中的 HTML 界面'),
-                    subtitle: _wrapped(
-                      '角色卡开场、状态栏等 html 代码块在隔离的网页视图里显示，并提供酒馆助手风格的接口（消息、变量、/send 等）。预设填入酒馆输入框的文本会直接用于续写下一章。页面只能通过 HTTPS 联网，不能跳转或读文件。关闭后按源码显示。',
-                    ),
-                    suffix: FSwitch(value: renderHtml, onChange: setHtml),
-                    onPress: () => setHtml(!renderHtml),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const DefaultPresetSetting(),
-              const SizedBox(height: 24),
-              Text('本章亮点生图', style: heading),
-              const SizedBox(height: 8),
-              Text(
-                '每次生成的亮点图数量，默认由 AI 根据章节内容决定。',
-                style: theme.typography.body.sm.copyWith(
-                  color: theme.colors.mutedForeground,
+            ),
+            if (remote == null)
+              FButton(
+                variant: FButtonVariant.ghost,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => showAppDialog<void>(
+                  context: context,
+                  builder: (_) => const ConnectionDialog(),
                 ),
+                prefix: const Icon(FLucideIcons.plus),
+                child: const Text('添加连接'),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final count in <int?>[null, 1, 2, 3, 4, 5, 6])
-                    ChoicePill(
-                      label: count == null ? '由 AI 决定' : '$count 张',
-                      selected: highlightCount == count,
-                      onPress: () async {
-                        try {
-                          await ref.read(repositoryProvider).setSetting(
-                            'chapterHighlights',
-                            {'count': count},
-                          );
-                        } catch (e) {
-                          if (context.mounted) showError(context, e);
-                        }
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '模型连接',
-                      style: theme.typography.body.lg.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(
+            remote == null
+                ? '一个连接可保存多个模型。支持 OpenAI 兼容接口、ComfyUI 与 NovelAI 生图、SillyDraft 远程执行器，以及桌面端的本地订阅（Claude Code、Codex）。密钥以明文保存在本机的密钥文件里，不进入作品备份和同步。'
+                : '连接在桌面管理：地址与密钥只保存在桌面电脑里。这里可以为各任务选择连接。',
+            style: theme.typography.body.sm.copyWith(
+              color: theme.colors.mutedForeground,
+            ),
+          ),
+        ),
+        AsyncView(
+          value: ref.watch(connectionsProvider),
+          builder: (List<ModelConnection> connections) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (connections.isEmpty)
+                const FCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('尚未配置模型。你仍然可以离线编辑和阅读，添加连接后即可使用 AI 创作。'),
                   ),
-                  if (remote == null)
-                    FButton(
-                      variant: FButtonVariant.ghost,
-                      mainAxisSize: MainAxisSize.min,
-                      onPress: () => showAppDialog<void>(
-                        context: context,
-                        builder: (_) => const ConnectionDialog(),
-                      ),
-                      prefix: const Icon(FLucideIcons.plus),
-                      child: const Text('添加连接'),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  remote == null
-                      ? '一个连接可保存多个模型。支持 OpenAI 兼容接口、ComfyUI 与 NovelAI 生图、SillyDraft 远程执行器，以及桌面端的本地订阅（Claude Code、Codex）。密钥以明文保存在本机的密钥文件里，不进入作品备份和同步。'
-                      : '连接在桌面管理：地址与密钥只保存在桌面电脑里。这里可以为各任务选择连接。',
-                  style: theme.typography.body.sm.copyWith(
-                    color: theme.colors.mutedForeground,
-                  ),
-                ),
-              ),
-              AsyncView(
-                value: ref.watch(connectionsProvider),
-                builder: (List<ModelConnection> connections) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (connections.isEmpty)
-                      const FCard(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('尚未配置模型。你仍然可以离线编辑和阅读，添加连接后即可使用 AI 创作。'),
-                        ),
-                      )
-                    else
-                      FTileGroup(
-                        children: [
-                          for (final connection in connections)
-                            FTile(
-                              prefix: Icon(
-                                connection.protocol.isLocalCli
-                                    ? FLucideIcons.squareTerminal
-                                    : FLucideIcons.network,
-                              ),
-                              title: Text(connection.name),
-                              subtitle: _wrapped(
-                                connection.protocol.isLocalCli
-                                    ? '${protocolLabels[connection.protocol]} · ${connection.model == 'default' ? '默认模型' : connection.model}\n${connection.command.isEmpty ? '自动查找命令' : connection.command}'
-                                    : '${modelKindLabels[connection.kind]} · ${connection.models.join('、')}\n${connection.baseUrl}',
-                              ),
-                              suffix: remote == null
-                                  ? Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconAction(
-                                          icon: FLucideIcons.qrCode,
-                                          tooltip: '扫码分享',
-                                          onPress: () => shareByQr(
-                                            context,
-                                            () => _shareConnection(
-                                              ref.read(servicesProvider),
-                                              connection,
-                                            ),
-                                            containsKey: true,
-                                          ),
-                                        ),
-                                        IconAction(
-                                          icon: FLucideIcons.pencil,
-                                          tooltip: '编辑连接',
-                                          onPress: () => showAppDialog<void>(
-                                            context: context,
-                                            builder: (_) => ConnectionDialog(
-                                              connection: connection,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                            ),
-                        ],
-                      ),
-                    if (connections.isNotEmpty) ...[
-                      const SizedBox(height: 28),
-                      Text('任务使用的模型', style: heading),
-                      const SizedBox(height: 16),
-                      for (final role in {
-                        'writing': '正文写作',
-                        'editor': '编辑 Agent',
-                        'analysis': '资料整理',
-                        'image': '普通生图引擎',
-                        'imageNsfw': 'NSFW 生图引擎',
-                      }.entries)
-                        if (connections.any(
-                          (c) => connectionServes(c, role.key),
-                        ))
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: _roleSelect(
-                              ref,
-                              label: role.value,
-                              role: role.key,
-                              roles: roles,
-                              connections: [
-                                for (final c in connections)
-                                  if (connectionServes(c, role.key)) c,
-                              ],
-                            ),
-                          ),
-                      const Text(
-                        '生图前使用资料整理模型判断画面是否为 NSFW，再按所选引擎编写提示词。'
-                        '请为 NSFW 选择支持此类内容的引擎；未指定时遇到 NSFW 会停止生成。',
-                      ),
-                      const SizedBox(height: 12),
-                      Text('旁路整理', style: heading),
-                      const SizedBox(height: 8),
-                      const Text(
-                        '每写完一章，用资料整理模型在后台维护人物、记忆与推演。每次整理会额外调用若干轮模型（最多 8 轮），每轮都会重发本章正文和资料索引。',
-                      ),
-                      const SizedBox(height: 12),
-                      const SidecarSwitches(),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('世界书预算', style: heading),
-              const SizedBox(height: 8),
-              const Text(worldInfoBudgetHelp),
-              const SizedBox(height: 12),
-              const WorldInfoBudgetFields(),
-              const SizedBox(height: 24),
-              FTileGroup(
-                children: [
-                  FTile(
-                    key: const Key('settings-usage'),
-                    prefix: const Icon(FLucideIcons.receipt),
-                    title: const Text('用量与成本'),
-                    subtitle: usage == null
-                        ? null
-                        : _wrapped([usage.title, ?usage.note].join('\n')),
-                    suffix: const Icon(FLucideIcons.chevronRight),
-                    onPress: () => Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => const UsageScreen(),
-                      ),
-                    ),
-                  ),
-                  FTile(
-                    key: const Key('settings-skills'),
-                    prefix: const Icon(FLucideIcons.puzzle),
-                    title: const Text('助手技能'),
-                    subtitle: _wrapped(
-                      'Agent Skills（SKILL.md）：内置写作技能、导入社区技能或自己编写',
-                    ),
-                    suffix: const Icon(FLucideIcons.chevronRight),
-                    onPress: () => Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => const SkillsScreen(),
-                      ),
-                    ),
-                  ),
-                  if (!isPhone && remote == null)
-                    FTile(
-                      key: const Key('settings-hosting'),
-                      prefix: const Icon(FLucideIcons.smartphone),
-                      title: const Text('手机连接'),
-                      subtitle: _wrapped('让手机扫码使用这台电脑的作品库和模型'),
-                      suffix: const Icon(FLucideIcons.chevronRight),
-                      onPress: () => Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => const HostingScreen(),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              if (updates) ...[
-                const SizedBox(height: 24),
+                )
+              else
                 FTileGroup(
                   children: [
-                    FTile(
-                      key: const Key('settings-check-update'),
-                      prefix: Icon(
-                        availableUpdate == null
-                            ? FLucideIcons.refreshCw
-                            : FLucideIcons.download,
-                      ),
-                      title: _wrapped(
-                        availableUpdate == null
-                            ? '检查更新'
-                            : '更新至 ${availableUpdate.version}',
-                      ),
-                      subtitle: _wrapped(
-                        availableUpdate == null
-                            ? '从 GitHub Releases 获取新版本，下载后手动安装'
-                            : '查看更新说明并下载，下载后手动安装',
-                      ),
-                      suffix: availableUpdate == null
-                          ? null
-                          : FBadge(child: const Text('新版')),
-                      onPress: () => openUpdates(context, ref),
-                    ),
-                    FTile(
-                      key: const Key('settings-auto-update'),
-                      prefix: const Icon(FLucideIcons.bellRing),
-                      title: const Text('自动检查更新'),
-                      subtitle: _wrapped('启动时每天最多访问一次 GitHub'),
-                      suffix: FSwitch(
-                        value: autoUpdate,
-                        onChange: (value) => setAutoUpdateCheck(
-                          ref.read(repositoryProvider),
-                          value,
+                    for (final connection in connections)
+                      FTile(
+                        prefix: Icon(
+                          connection.protocol.isLocalCli
+                              ? FLucideIcons.squareTerminal
+                              : FLucideIcons.network,
                         ),
+                        title: Text(connection.name),
+                        subtitle: _wrapped(
+                          connection.protocol.isLocalCli
+                              ? '${protocolLabels[connection.protocol]} · ${connection.model == 'default' ? '默认模型' : connection.model}\n${connection.command.isEmpty ? '自动查找命令' : connection.command}'
+                              : '${modelKindLabels[connection.kind]} · ${connection.models.join('、')}\n${connection.baseUrl}',
+                        ),
+                        suffix: remote == null
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconAction(
+                                    icon: FLucideIcons.qrCode,
+                                    tooltip: '扫码分享',
+                                    onPress: () => shareByQr(
+                                      context,
+                                      () => _shareConnection(
+                                        ref.read(servicesProvider),
+                                        connection,
+                                      ),
+                                      containsKey: true,
+                                    ),
+                                  ),
+                                  IconAction(
+                                    icon: FLucideIcons.pencil,
+                                    tooltip: '编辑连接',
+                                    onPress: () => showAppDialog<void>(
+                                      context: context,
+                                      builder: (_) => ConnectionDialog(
+                                        connection: connection,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : null,
                       ),
-                      onPress: () => setAutoUpdateCheck(
-                        ref.read(repositoryProvider),
-                        !autoUpdate,
-                      ),
-                    ),
                   ],
                 ),
+              if (connections.isNotEmpty) ...[
+                const SizedBox(height: 28),
+                Text('任务使用的模型', style: heading),
+                const SizedBox(height: 16),
+                for (final role in {
+                  'writing': '正文写作',
+                  'editor': '编辑 Agent',
+                  'analysis': '资料整理',
+                  'image': '普通生图引擎',
+                  'imageNsfw': 'NSFW 生图引擎',
+                }.entries)
+                  if (connections.any((c) => connectionServes(c, role.key)))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _roleSelect(
+                        ref,
+                        label: role.value,
+                        role: role.key,
+                        roles: roles,
+                        connections: [
+                          for (final c in connections)
+                            if (connectionServes(c, role.key)) c,
+                        ],
+                      ),
+                    ),
+                const Text(
+                  '生图前使用资料整理模型判断画面是否为 NSFW，再按所选引擎编写提示词。'
+                  '请为 NSFW 选择支持此类内容的引擎；未指定时遇到 NSFW 会停止生成。',
+                ),
               ],
-              const SizedBox(height: 24),
-              FTileGroup(
-                children: [
-                  FTile(
-                    key: const Key('settings-privacy-policy'),
-                    prefix: const Icon(FLucideIcons.shieldCheck),
-                    title: const Text('隐私政策'),
-                    subtitle: _wrapped('了解本地作品、模型服务和导入资源如何处理数据'),
-                    suffix: const Icon(FLucideIcons.externalLink),
-                    onPress: () async {
-                      final url = Uri.parse(
-                        'https://github.com/moonrailgun/sillydraft/blob/main/docs/privacy-policy.md',
-                      );
-                      var opened = false;
-                      try {
-                        opened = await launchUrl(
-                          url,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      } catch (_) {
-                        // Use the same visible error for an unavailable launcher.
-                      }
-                      if (!opened && context.mounted) {
-                        showError(context, '无法打开隐私政策：$url');
-                      }
-                    },
-                  ),
-                ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        FTileGroup(
+          children: [
+            FTile(
+              key: const Key('settings-usage'),
+              prefix: const Icon(FLucideIcons.receipt),
+              title: const Text('用量与成本'),
+              subtitle: usage == null
+                  ? null
+                  : _wrapped([usage.title, ?usage.note].join('\n')),
+              suffix: const Icon(FLucideIcons.chevronRight),
+              onPress: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const UsageScreen()),
               ),
-              const SizedBox(height: 32),
-              const FDivider(),
-              const SizedBox(height: 8),
-              Row(
+            ),
+          ],
+        ),
+      ],
+      SettingsTab.creation: [
+        const DefaultPresetSetting(),
+        const SizedBox(height: 24),
+        Text('本章亮点生图', style: heading),
+        const SizedBox(height: 8),
+        Text(
+          '每次生成的亮点图数量，默认由 AI 根据章节内容决定。',
+          style: theme.typography.body.sm.copyWith(
+            color: theme.colors.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final count in <int?>[null, 1, 2, 3, 4, 5, 6])
+              ChoicePill(
+                label: count == null ? '由 AI 决定' : '$count 张',
+                selected: highlightCount == count,
+                onPress: () async {
+                  try {
+                    await ref.read(repositoryProvider).setSetting(
+                      'chapterHighlights',
+                      {'count': count},
+                    );
+                  } catch (e) {
+                    if (context.mounted) showError(context, e);
+                  }
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        if (ref.watch(connectionsProvider).value?.isNotEmpty == true) ...[
+          Text('旁路整理', style: heading),
+          const SizedBox(height: 8),
+          const Text(
+            '每写完一章，用资料整理模型在后台维护人物、记忆与推演。每次整理会额外调用若干轮模型（最多 8 轮），每轮都会重发本章正文和资料索引。',
+          ),
+          const SizedBox(height: 12),
+          const SidecarSwitches(),
+          const SizedBox(height: 24),
+        ],
+        Text('世界书预算', style: heading),
+        const SizedBox(height: 8),
+        const Text(worldInfoBudgetHelp),
+        const SizedBox(height: 12),
+        const WorldInfoBudgetFields(),
+        const SizedBox(height: 24),
+        FTileGroup(
+          children: [
+            FTile(
+              key: const Key('settings-skills'),
+              prefix: const Icon(FLucideIcons.puzzle),
+              title: const Text('助手技能'),
+              subtitle: _wrapped('Agent Skills（SKILL.md）：内置写作技能、导入社区技能或自己编写'),
+              suffix: const Icon(FLucideIcons.chevronRight),
+              onPress: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const SkillsScreen()),
+              ),
+            ),
+          ],
+        ),
+      ],
+      SettingsTab.about: [
+        if (updates) ...[
+          FTileGroup(
+            children: [
+              FTile(
+                key: const Key('settings-check-update'),
+                prefix: Icon(
+                  availableUpdate == null
+                      ? FLucideIcons.refreshCw
+                      : FLucideIcons.download,
+                ),
+                title: _wrapped(
+                  availableUpdate == null
+                      ? '检查更新'
+                      : '更新至 ${availableUpdate.version}',
+                ),
+                subtitle: _wrapped(
+                  availableUpdate == null
+                      ? '从 GitHub Releases 获取新版本，下载后手动安装'
+                      : '查看更新说明并下载，下载后手动安装',
+                ),
+                suffix: availableUpdate == null
+                    ? null
+                    : FBadge(child: const Text('新版')),
+                onPress: () => openUpdates(context, ref),
+              ),
+              FTile(
+                key: const Key('settings-auto-update'),
+                prefix: const Icon(FLucideIcons.bellRing),
+                title: const Text('自动检查更新'),
+                subtitle: _wrapped('启动时每天最多访问一次 GitHub'),
+                suffix: FSwitch(
+                  value: autoUpdate,
+                  onChange: (value) =>
+                      setAutoUpdateCheck(ref.read(repositoryProvider), value),
+                ),
+                onPress: () => setAutoUpdateCheck(
+                  ref.read(repositoryProvider),
+                  !autoUpdate,
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 24),
+        FTileGroup(
+          children: [
+            FTile(
+              key: const Key('settings-privacy-policy'),
+              prefix: const Icon(FLucideIcons.shieldCheck),
+              title: const Text('隐私政策'),
+              subtitle: _wrapped('了解本地作品、模型服务和导入资源如何处理数据'),
+              suffix: const Icon(FLucideIcons.externalLink),
+              onPress: () async {
+                final url = Uri.parse(
+                  'https://github.com/moonrailgun/sillydraft/blob/main/docs/privacy-policy.md',
+                );
+                var opened = false;
+                try {
+                  opened = await launchUrl(
+                    url,
+                    mode: LaunchMode.externalApplication,
+                  );
+                } catch (_) {
+                  // Use the same visible error for an unavailable launcher.
+                }
+                if (!opened && context.mounted) {
+                  showError(context, '无法打开隐私政策：$url');
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        const FDivider(),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2, right: 16),
+              child: Icon(
+                FLucideIcons.bookOpen,
+                size: 20,
+                color: theme.colors.mutedForeground,
+              ),
+            ),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, right: 16),
-                    child: Icon(
-                      FLucideIcons.bookOpen,
-                      size: 20,
+                  Text(
+                    key: const Key('settings-version'),
+                    version == null
+                        ? 'SillyDraft'
+                        : 'SillyDraft ${version.version} (${version.buildNumber})',
+                    style: theme.typography.body.sm.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '正文属于作品，Agent 是创作工具。\n本地优先，支持手机与桌面。',
+                    style: theme.typography.body.sm.copyWith(
                       color: theme.colors.mutedForeground,
                     ),
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    };
+    return PageScaffold(
+      title: '设置',
+      bottom: LayoutBuilder(
+        builder: (context, constraints) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            24 + max(0.0, (constraints.maxWidth - 800) / 2),
+            4,
+            24 + max(0.0, (constraints.maxWidth - 800) / 2),
+            0,
+          ),
+          child: FTabs(
+            control: FTabControl.lifted(
+              index: _tab.index,
+              onChange: (index) =>
+                  setState(() => _tab = SettingsTab.values[index]),
+            ),
+            children: [
+              for (final tab in SettingsTab.values)
+                FTabEntry(
+                  label: CountBadge(
+                    count: tab == SettingsTab.about && availableUpdate != null
+                        ? 1
+                        : 0,
+                    child: Text(tab.label),
+                  ),
+                  child: const SizedBox.shrink(),
+                ),
+            ],
+          ),
+        ),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) => IndexedStack(
+          index: _tab.index,
+          children: [
+            for (final tab in SettingsTab.values)
+              ListView(
+                key: PageStorageKey(tab),
+                primary: false,
+                // Center the content while keeping the scrollbar at the page edge.
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24 + max(0.0, (constraints.maxWidth - 800) / 2),
+                  vertical: 24,
+                ),
+                children: [
+                  if (remote != null) ...[
+                    FTileGroup(
                       children: [
-                        Text(
-                          key: const Key('settings-version'),
-                          version == null
-                              ? 'SillyDraft'
-                              : 'SillyDraft ${version.version} (${version.buildNumber})',
-                          style: theme.typography.body.sm.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '正文属于作品，Agent 是创作工具。\n本地优先，支持手机与桌面。',
-                          style: theme.typography.body.sm.copyWith(
-                            color: theme.colors.mutedForeground,
+                        FTile(
+                          key: const Key('settings-remote'),
+                          prefix: const Icon(FLucideIcons.monitor),
+                          title: Text('正在使用桌面：${remote.hello.name}'),
+                          subtitle: _wrapped('作品、资料和模型都来自这台桌面电脑'),
+                          suffix: FButton(
+                            variant: FButtonVariant.outline,
+                            mainAxisSize: MainAxisSize.min,
+                            onPress: () => switchLibrary(context, ref, null),
+                            child: const Text('切回本机'),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                  ],
+                  ...sections[tab]!,
                 ],
               ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }

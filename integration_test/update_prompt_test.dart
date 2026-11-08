@@ -102,6 +102,8 @@ void main() {
 
     await tester.tap(find.text('设置').last);
     await tester.pumpAndSettle();
+    await tester.tap(find.text('关于'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('settings-version')),
       300,
