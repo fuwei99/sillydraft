@@ -118,6 +118,15 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.runAsync(services.close);
     });
+    // These fixtures exercise update reminders independently of model setup.
+    await services.saveConnection(
+      ModelConnection(
+        id: 'test',
+        name: '测试',
+        baseUrl: 'https://example.test/v1',
+        model: 'test',
+      ),
+    );
     await mount(tester, services, home: home);
     return services;
   }

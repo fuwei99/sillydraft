@@ -52,6 +52,9 @@ class _HomeState extends ConsumerState<HomeScreen> {
     _visited.add(selectedIndex);
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final update = ref.watch(availableUpdateProvider);
+    final needsModel =
+        ref.watch(servicesProvider).remote == null &&
+        ref.watch(connectionsProvider).value?.isEmpty == true;
     final desktopUpdate =
         wide &&
         !touchPlatform &&
@@ -62,7 +65,7 @@ class _HomeState extends ConsumerState<HomeScreen> {
       (
         icon: FLucideIcons.settings,
         label: '设置',
-        badge: update != null && !desktopUpdate ? 1 : 0,
+        badge: needsModel || (update != null && !desktopUpdate) ? 1 : 0,
       ),
     ];
     return PopScope(
