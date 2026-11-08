@@ -7,7 +7,7 @@ import 'task_runner_test.dart' show ScriptProvider;
 
 void main() {
   test(
-    'editor tools freeze chapter scope and leave lore changes for review',
+    'editor tools freeze chapter scope and keep explicit lore proposals',
     () async {
       final repo = StoryRepository.memory();
       addTearDown(repo.close);
@@ -86,10 +86,11 @@ void main() {
         }),
       );
       addTearDown(runner.close);
-      final task = await EditorAgent(
-        repository: repo,
-        runner: runner,
-      ).send(conversationId: conversation, connection: config, message: '补充伏笔');
+      final task = await EditorAgent(repository: repo, runner: runner).send(
+        conversationId: conversation,
+        connection: config,
+        message: '提出伏笔资料建议，待我审阅后再保存',
+      );
       expect((await runner.wait(task.id)).status, TaskStatus.completed);
       expect(proposalTask, isNotNull);
       expect((await repo.listLore(novel.activeBranchId)).length, 2);

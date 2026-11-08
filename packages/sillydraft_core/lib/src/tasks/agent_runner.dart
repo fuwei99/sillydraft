@@ -50,7 +50,7 @@ const _chapterSourceChanged = {
   'retryable': false,
 };
 
-const _editingTools = <Map<String, dynamic>>[
+final _editingTools = <Map<String, dynamic>>[
   {
     'type': 'function',
     'function': {
@@ -83,11 +83,15 @@ const _editingTools = <Map<String, dynamic>>[
       },
     },
   },
+  _saveLoreTool({
+    for (final k in LoreKind.values)
+      if (k != LoreKind.map) k,
+  }, withSource: true),
   {
     'type': 'function',
     'function': {
       'name': 'list_lore',
-      'description': '列出当前分支在编辑位置已可见的旁路资料，包括确定程度与是否待复核。',
+      'description': '列出当前分支在编辑位置已可见的最新资料，包括确定程度与是否待复核。',
       'parameters': {
         'type': 'object',
         'properties': <String, dynamic>{},
@@ -99,7 +103,7 @@ const _editingTools = <Map<String, dynamic>>[
     'type': 'function',
     'function': {
       'name': 'read_lore',
-      'description': '按 ID 读取当前编辑位置的旁路资料。',
+      'description': '按 ID 读取当前参考范围内的最新资料，含 revisionId、内容与 data；更新前先读取。',
       'parameters': {
         'type': 'object',
         'properties': {
@@ -434,6 +438,7 @@ extension _AgentExecution on TaskRunner {
       'update_novel',
       'propose_chapter',
       'propose_lore',
+      'save_lore',
       'insert_images',
       'create_chapter',
       'rename_chapter',
@@ -486,7 +491,7 @@ extension _AgentExecution on TaskRunner {
           if (writingTools.contains(call.name)) {
             if (illustrationOnly) {
               return {
-                'error': '本轮仅生成插图，不能修改作品信息、正文或提出资料建议。请使用生图工具；不可用时说明原因。',
+                'error': '本轮仅生成插图，不能修改作品信息、正文、资料或提出资料建议。请使用生图工具；不可用时说明原因。',
                 'code': 'tool_not_allowed',
                 'retryable': false,
               };
@@ -893,31 +898,73 @@ extension _AgentExecution on TaskRunner {
         'coverAssetId': novel.coverAssetId,
       };
     }
-    final lore = (task.input['loreSnapshot'] as List? ?? [])
-        .cast<Map<String, dynamic>>();
-    if (call.name == 'list_lore') {
-      if (args.isNotEmpty) throw const FormatException('参数无效');
-      return {
-        'entries': [
-          for (final e in lore)
-            {
-              for (final key in [
-                'id',
-                'name',
-                'kind',
-                'certainty',
-                'sourceStale',
-              ])
-                key: e[key],
-            },
-        ],
-      };
-    }
-    if (call.name == 'read_lore') {
-      if (args.length != 1 || args['id'] is! String) {
+    if (call.name == 'list_lore' || call.name == 'read_lore') {
+      if ((call.name == 'list_lore' && args.isNotEmpty) ||
+          (call.name == 'read_lore' &&
+              (args.length != 1 || args['id'] is! String))) {
         throw const FormatException('参数无效');
       }
-      return lore.firstWhere((e) => e['id'] == args['id']);
+      return await repository.withAgentChapters(task, chapters, () async {
+            final lore = await repository.listLore(
+              task.branchId,
+              throughChapterId: chapters.lastOrNull?['id'] as String?,
+            );
+            if (call.name == 'list_lore') {
+              return <String, dynamic>{
+                'entries': [
+                  for (final e in lore)
+                    {
+                      'id': e.id,
+                      'revisionId': e.revisionId,
+                      'name': e.name,
+                      'kind': e.kind.name,
+                      'certainty': e.certainty.name,
+                      'sourceStale': e.sourceStale,
+                      'atChapterId': e.atChapterId,
+                    },
+                ],
+              };
+            }
+            final e = lore.where((e) => e.id == args['id']).firstOrNull;
+            if (e == null) throw const FormatException('资料不存在或不在当前参考范围内');
+            return <String, dynamic>{
+              'id': e.id,
+              'revisionId': e.revisionId,
+              'name': e.name,
+              'kind': e.kind.name,
+              'content': e.content,
+              'certainty': e.certainty.name,
+              'sourceStale': e.sourceStale,
+              'atChapterId': e.atChapterId,
+              'data': e.data,
+            };
+          }) ??
+          _chapterSourceChanged;
+    }
+    if (call.name == 'save_lore') {
+      final entries = args['entries'];
+      if (args.length != 1 ||
+          entries is! List ||
+          entries.isEmpty ||
+          entries.length > 20) {
+        throw const FormatException('entries 须为 1 到 20 条');
+      }
+      final results = <Map<String, dynamic>>[];
+      for (final (i, entry) in entries.indexed) {
+        final result = await repository.withAgentChapters(
+          task,
+          chapters,
+          () async {
+            cancel.check();
+            return _saveLore(task, i, entry, chapters: chapters);
+          },
+        );
+        if (result == null) {
+          return {..._chapterSourceChanged, 'results': results};
+        }
+        results.add(result);
+      }
+      return {'results': results};
     }
     if (call.name == 'propose_lore') {
       const required = [

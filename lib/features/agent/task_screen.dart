@@ -87,6 +87,7 @@ const _toolLabels = {
   'list_lore': '查找资料',
   'read_lore': '读取资料',
   'propose_lore': '整理资料建议',
+  'save_lore': '保存资料',
   'list_chapters': '查看章节目录',
   'read_chapter': '读取章节',
   'search_story': '搜索正文',

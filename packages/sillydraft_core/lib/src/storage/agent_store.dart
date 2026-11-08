@@ -72,6 +72,16 @@ extension AgentOperations on StoryRepository {
     return true;
   }
 
+  /// Keep the snapshot check and the editor's lore access in one transaction.
+  Future<T?> withAgentChapters<T>(
+    GenerationTask task,
+    List<Map<String, dynamic>> expected,
+    Future<T> Function() action,
+  ) => _db.transaction(() async {
+    if (!await agentChaptersCurrent(task, expected)) return null;
+    return action();
+  });
+
   /// Chapter management shares the normal store operations and their cleanup.
   Future<List<Chapter>?> manageAgentChapter({
     required GenerationTask task,

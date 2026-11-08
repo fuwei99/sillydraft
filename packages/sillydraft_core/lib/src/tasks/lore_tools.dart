@@ -10,16 +10,26 @@ const _loreFields = {
 };
 const _loreFlags = {'user', 'directed'};
 
-Map<String, dynamic> _saveLoreTool(Set<LoreKind> kinds) => _sidecarFunction(
+Map<String, dynamic> _saveLoreTool(
+  Set<LoreKind> kinds, {
+  bool withSource = false,
+}) => _sidecarFunction(
   'save_lore',
-  '批量新建或更新资料，直接写入并归于本章。更新须给 id 与 expectedRevisionId，未给出的字段保持原值。单次最多 20 条，逐条返回结果。',
+  '批量新建或更新内部资料，直接保存。更新须给 id 与 expectedRevisionId，未给出的可选字段保持原值。单次最多 20 条，逐条返回结果。'
+      '${withSource ? '每条须给 sourceChapterId，归于该来源章节；先读取已有条目避免重复，不修改世界书。' : '资料归于本章。'}',
   {
     'entries': {
       'type': 'array',
+      'minItems': 1,
       'maxItems': 20,
       'items': {
         'type': 'object',
         'properties': {
+          if (withSource)
+            'sourceChapterId': {
+              'type': 'string',
+              'description': '资料依据的可见章节 ID；多章归纳用最后一章，不能早于内容出现的位置。',
+            },
           'id': {'type': 'string', 'description': '更新已有条目时填写'},
           'expectedRevisionId': {
             'type': 'string',
@@ -65,7 +75,13 @@ Map<String, dynamic> _saveLoreTool(Set<LoreKind> kinds) => _sidecarFunction(
             ],
           },
         },
-        'required': ['kind', 'name', 'content', 'certainty'],
+        'required': [
+          'kind',
+          'name',
+          'content',
+          'certainty',
+          if (withSource) 'sourceChapterId',
+        ],
         'additionalProperties': false,
       },
     },
@@ -79,11 +95,19 @@ extension _LoreTools on TaskRunner {
   Future<Map<String, dynamic>> _saveLore(
     GenerationTask task,
     int index,
-    Object? value,
-  ) async {
+    Object? value, {
+    List<Map<String, dynamic>>? chapters,
+  }) async {
     LoreEntry? previous;
     try {
       final args = jsonObject(value, 'entry');
+      final source = chapters
+          ?.where((c) => c['id'] == args['sourceChapterId'])
+          .firstOrNull;
+      if (chapters != null && source == null) {
+        throw const FormatException('sourceChapterId 必须是当前参考范围内的章节');
+      }
+      final chapterId = source?['id'] as String? ?? task.chapterId;
       final kind = LoreKind.values.asNameMap()[args['kind']];
       final certainty = LoreCertainty.values.asNameMap()[args['certainty']];
       final name = args['name'], content = args['content'];
@@ -99,7 +123,8 @@ extension _LoreTools on TaskRunner {
         );
       }
       final fields = _loreFields[kind] ?? const <String>[];
-      const common = {
+      final common = {
+        if (chapters != null) 'sourceChapterId',
         'id',
         'expectedRevisionId',
         'kind',
@@ -125,9 +150,41 @@ extension _LoreTools on TaskRunner {
           : await repository.getLoreEntry(
               branchId: task.branchId,
               id: id as String,
-              throughChapterId: task.chapterId,
+              throughChapterId: chapters?.last['id'] as String? ?? chapterId,
             );
-      if (!_sidecarAllows(_sidecarDuties(task), kind, certainty, previous)) {
+      if (chapters != null) {
+        // An older source cannot bypass a newer revision visible to this turn.
+        if (previous != null && previous.revisionId != expected) {
+          throw const LoreConflict();
+        }
+        if (kind == LoreKind.map) {
+          throw const FormatException('助手不能编辑地图');
+        }
+        if (previous?.data['worldBookOnly'] == true) {
+          throw const FormatException('不能修改世界书快照，请整理为内部资料');
+        }
+        if (id == null) {
+          final visible = await repository.listLore(
+            task.branchId,
+            throughChapterId: chapters.last['id'] as String,
+          );
+          if (visible.any(
+            (e) =>
+                e.kind == kind &&
+                e.name == name.trim() &&
+                e.data['worldBookOnly'] != true,
+          )) {
+            throw const FormatException(
+              '已有同名资料，请读取后用 id 与 expectedRevisionId 更新',
+            );
+          }
+        }
+      } else if (!_sidecarAllows(
+        _sidecarDuties(task),
+        kind,
+        certainty,
+        previous,
+      )) {
         throw FormatException('当前开启的职责不能写入 ${kind.name}（${certainty.name}）');
       }
       final saved = await repository.saveLoreEntry(
@@ -138,9 +195,16 @@ extension _LoreTools on TaskRunner {
         name: name,
         content: content,
         certainty: certainty,
-        atChapterId: task.chapterId,
+        atChapterId: chapterId,
         data: {...?previous?.data, ...given},
-        provenance: _sidecarProvenance(task),
+        provenance: source == null
+            ? _sidecarProvenance(task)
+            : {
+                'type': 'editor',
+                'taskId': task.id,
+                'chapterId': chapterId,
+                'revisionId': source['revisionId'],
+              },
       );
       return {'index': index, 'id': saved.id, 'revisionId': saved.revisionId};
     } on LoreConflict {

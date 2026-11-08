@@ -52,6 +52,7 @@ void main() {
           'rename_chapter',
           'delete_chapter',
           'update_novel',
+          'save_lore',
         ]) {
           expect(names, isNot(contains(name)));
         }
@@ -73,6 +74,17 @@ void main() {
             'content': '不应保存',
             'certainty': 'fact',
             'sourceChapterId': chapter.id,
+          });
+          yield ToolCallReady('save', 'save_lore', {
+            'entries': [
+              {
+                'kind': 'world',
+                'name': '不应保存',
+                'content': '不应保存',
+                'certainty': 'fact',
+                'sourceChapterId': chapter.id,
+              },
+            ],
           });
           yield ToolCallReady('create', 'create_chapter', {'name': '不应创建'});
           yield ToolCallReady('rename', 'rename_chapter', {
@@ -138,11 +150,11 @@ void main() {
         if (m.role == 'tool') jsonDecode(m.content) as Map,
     ];
     expect(
-      results.take(6).map((r) => r['code']),
+      results.take(7).map((r) => r['code']),
       everyElement('tool_not_allowed'),
     );
-    expect(results.take(6).map((r) => r['retryable']), everyElement(false));
-    expect(results[6]['chapters'][0]['canEdit'], false);
+    expect(results.take(7).map((r) => r['retryable']), everyElement(false));
+    expect(results[7]['chapters'][0]['canEdit'], false);
     expect((await repo.getNovel(novel.id)).title, novel.title);
     expect((await repo.getStory(novel.activeBranchId)).chapters, hasLength(1));
     expect(await repo.listProposals(novel.activeBranchId), isEmpty);
