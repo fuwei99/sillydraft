@@ -742,7 +742,10 @@ const tavernRuntimeJs = r'''
   };
   Object.keys(exported).forEach(function (key) { window[key] = exported[key]; });
   window.TavernHelper = exported;
-  window.SillyTavern = SillyTavern;
+  // JS-Slash-Runner a0f3a180, src/iframe/predefine.js exposes a fresh context.
+  Object.defineProperty(window, 'SillyTavern', {
+    get: function () { return Object.assign({}, SillyTavern.getContext(), SillyTavern); },
+  });
   window.toastr = toastr;
   window.Mvu = Mvu;
   window.SillyDraft = { version: S.version || '', state: S,

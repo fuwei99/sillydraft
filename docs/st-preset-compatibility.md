@@ -216,6 +216,8 @@ SillyDraft 分别保存模型原始结果与候选正文。提示词专用正则
 
 HTML 前端块按酒馆助手固定提交 `a0f3a180344cff38a4b3e75041d5a94380b877d6` 的公共依赖约定预载 lodash、jQuery、jQuery UI / Touch Punch、Font Awesome、showdown、Vue 3.5.43（runtime-only）、VueRouter 5.4.0、Zod 4.4.3、YAML 2.9.1 和 Tailwind 4.1.12，在卡片脚本前可用。Zod、YAML、Tailwind 随应用内置，其余沿用 CDN 加载；普通片段不获得这些依赖。卡片用 `document.open/write/close` 重建页面后，恢复宿主样式、输入框、事件、高度观察和 Tailwind 动态样式，保留未完成的桥接请求。
 
+前端块的 `SillyTavern` 按该提交的 [`src/iframe/predefine.js`](https://github.com/N0VI028/JS-Slash-Runner/blob/a0f3a180344cff38a4b3e75041d5a94380b877d6/src/iframe/predefine.js) 暴露当前已支持的上下文字段：可直接读取 `SillyTavern.name1`、`name2`、`chat`、`chatMetadata` 等，也保留 `getContext()`。每次读取全局对象都取最新上下文，社区前端初始化 MVU 时可用当前用户角色名替换 `{{user}}`；不自动改写之前已保存的变量值。支持范围与原生回归见 [HTML 界面验证](verification/html-rendering.md)。
+
 前端块还内置 `EjsTemplate`，对照 ST-Prompt-Template 1.17 固定提交 `d6f520d149aba146305b0b781ddd691d449c28d2`：复用其 EJS 引擎、变量操作、JSON 工具和语法检查，提供模板求值、编译、上下文、变量持久化及 Zod schema。这里只执行网页主动调用的模板，模型提示词和世界书中的 EJS 不会自动执行；世界书扫描、quick reply、提示词注入和 sandbox 等宿主能力尚不支持，并明确报错。具体版本依据、重建方式、验证结果和剩余生态缺口见 [HTML 界面验证](verification/html-rendering.md)。
 
 HTML 高度沿用酒馆助手 `src/iframe/adjust_iframe_height.js` 的 `body.scrollHeight` 测量：普通内容展开和收起都同步调整，`details` 的隐藏子元素不再撑住空白；收缩动画持续跟随实际内容高度。只有 `body { height: 100% }` 等受框架高度约束的布局保留每次 DOM 变化后一次的可见底边收缩，避免视口比例面板反复缩小。
