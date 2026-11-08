@@ -16,17 +16,18 @@ bool _sidecarAllows(
   LoreCertainty certainty,
   LoreEntry? previous,
 ) =>
-    duties.any(
-      (d) =>
-          d.kinds.contains(kind) &&
-          d.certainties.contains(certainty) &&
-          (previous == null || d.certainties.contains(previous.certainty)),
-    ) ||
-    (duties.contains(SidecarDuty.projection) &&
-        SidecarDuty.projection.kinds.contains(kind) &&
-        certainty == LoreCertainty.fact &&
-        previous != null &&
-        previous.certainty != LoreCertainty.fact);
+    previous?.data['worldBookOnly'] != true &&
+    (duties.any(
+          (d) =>
+              d.kinds.contains(kind) &&
+              d.certainties.contains(certainty) &&
+              (previous == null || d.certainties.contains(previous.certainty)),
+        ) ||
+        (duties.contains(SidecarDuty.projection) &&
+            SidecarDuty.projection.kinds.contains(kind) &&
+            certainty == LoreCertainty.fact &&
+            previous != null &&
+            previous.certainty != LoreCertainty.fact));
 
 Map<String, dynamic> _sidecarFunction(
   String name,

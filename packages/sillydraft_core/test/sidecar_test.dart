@@ -280,6 +280,68 @@ void main() {
   List<Map> results(GenerationTask task) =>
       (_toolResults(task).single['results'] as List).cast<Map>();
 
+  test('memory duty cannot update or delete world book snapshots', () async {
+    final script = <List<ProviderEvent>>[];
+    final b = await _book(script);
+    final snapshot = await b.repo.saveLoreEntry(
+      branchId: b.chapter.branchId,
+      kind: LoreKind.world,
+      name: '导入世界书',
+      content: '双月潮汐',
+      atChapterId: b.chapter.id,
+      data: {'worldBookOnly': true},
+    );
+    script.add([
+      ToolCallReady('save', 'save_lore', {
+        'entries': [
+          {
+            'id': snapshot.id,
+            'expectedRevisionId': snapshot.revisionId,
+            'kind': 'world',
+            'name': snapshot.name,
+            'content': '不应覆盖',
+            'certainty': 'fact',
+          },
+        ],
+      }),
+      ToolCallReady('delete', 'delete_lore', {
+        'id': snapshot.id,
+        'expectedRevisionId': snapshot.revisionId,
+      }),
+      const GenerationFinished('tool_calls'),
+    ]);
+    final done = await _run(b, {SidecarDuty.memory});
+    final results = _toolResults(done);
+    expect((results[0]['results'] as List).single['error'], isNotNull);
+    expect(results[1]['error'], isNotNull);
+    expect(
+      (await b.repo.getLoreEntry(
+        branchId: b.chapter.branchId,
+        id: snapshot.id,
+      )).revisionId,
+      snapshot.revisionId,
+    );
+  });
+
+  test('memory duty saves internal world settings', () async {
+    final b = await _book([
+      save([
+        {
+          'kind': 'world',
+          'name': '双月',
+          'content': '双月引发潮汐',
+          'certainty': 'fact',
+        },
+      ]),
+    ]);
+    final task = await _run(b, {SidecarDuty.memory});
+    expect(results(task).single['error'], isNull);
+    expect(
+      (await b.repo.listLore(b.novel.activeBranchId)).single.kind,
+      LoreKind.world,
+    );
+  });
+
   test(
     'save_lore writes at the chapter and keeps the author\'s images',
     () async {

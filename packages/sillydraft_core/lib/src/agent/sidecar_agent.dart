@@ -32,12 +32,13 @@ enum SidecarDuty {
       LoreKind.location,
       LoreKind.item,
       LoreKind.organization,
+      LoreKind.world,
     },
     {LoreCertainty.fact},
     '【整理线索与记忆】为本章写一条 event 条目：name 用章节标题，content 概括本章发生了什么'
         '（谁、做了什么、结果如何），storyTime 记故事内时间。这是长篇的记忆，之后的写作靠它回忆前情。'
         '新埋下的伏笔建 foreshadow 条目（status: planted）；本章推进或回收了已有伏笔就更新它的 status'
-        '（developing / resolved）。正文中有分量的地点、物品、组织建条目或更新。',
+        '（developing / resolved）。正文中有分量的地点、物品、组织建条目或更新，世界规则与背景设定写 world 条目。',
   ),
   projection(
     '推演剧情',
