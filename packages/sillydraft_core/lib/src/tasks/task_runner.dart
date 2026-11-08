@@ -32,6 +32,7 @@ part 'agent_runner.dart';
 part 'agent_compaction.dart';
 part 'illustration_runner.dart';
 part 'sidecar_runner.dart';
+part 'lore_tools.dart';
 part 'writing_quality.dart';
 
 typedef ProviderFactory = Future<ModelProvider> Function(
