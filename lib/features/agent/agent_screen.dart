@@ -953,9 +953,9 @@ class _AgentState extends ConsumerState<AgentPanel> {
       (FLucideIcons.search, '查找', '在正文里查找人物、物品或台词', () => fill('在正文中查找：')),
       (
         FLucideIcons.listTree,
-        '归纳',
-        '把人物、设定与伏笔整理成资料建议',
-        () => fill('归纳目前为止出场的人物、地点、设定和伏笔，整理成资料建议。'),
+        '整理资料',
+        '自动整理人物、设定与伏笔，填入资料栏',
+        () => fill('整理参考范围内出场的人物、地点、设定和伏笔，填入资料栏；已有条目补充更新，避免重复。'),
       ),
       (FLucideIcons.notebookPen, '生成正文', '为参考位置的章节生成正文', _generate),
       (
