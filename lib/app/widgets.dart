@@ -830,7 +830,14 @@ class AppSidebar extends StatelessWidget {
             children: [
               Expanded(child: Text(destinations[i].label)),
               if (destinations[i].badge > 0)
-                FBadge(child: Text('${destinations[i].badge}')),
+                FBadge(
+                  style: const FBadgeStyleDelta.delta(
+                    padding: EdgeInsetsGeometryDelta.value(
+                      EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    ),
+                  ),
+                  child: Text('${destinations[i].badge}'),
+                ),
             ],
           ),
           selected: i == selectedIndex,
