@@ -4,6 +4,8 @@ import 'package:sillydraft/app/app.dart';
 import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 void main() {
   testWidgets(
     'phone flow creates a novel and opens a real manuscript workspace',
@@ -19,6 +21,7 @@ void main() {
       addTearDown(services.close);
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.byKey(const Key('create-novel')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-blank')).last);
@@ -63,6 +66,7 @@ void main() {
       addTearDown(services.close);
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text('独立作品'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-reader')));

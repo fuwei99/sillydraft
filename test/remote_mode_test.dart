@@ -14,6 +14,7 @@ import 'package:sillydraft/features/remote/library_switcher.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
 import 'support/host.dart';
+import 'support/model_setup.dart';
 
 final _phone = TargetPlatformVariant.only(TargetPlatform.iOS);
 
@@ -115,6 +116,7 @@ void main() {
     addTearDown(services.close);
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
     expect(find.byType(LibrarySwitcher), findsOneWidget);
   }, variant: _phone);
 
@@ -143,6 +145,7 @@ void main() {
       }
 
       await pumpActivity();
+      await skipModelSetup(tester);
       await tester.tap(find.text('SillyDraft'));
       await pumpActivity();
       await tester.tap(find.textContaining('书房'));
@@ -163,6 +166,7 @@ void main() {
       await _settle(tester, find.text('桌面作品'));
       expect(find.text('桌面：书房'), findsOneWidget);
       expect(find.text('桌面作品'), findsOneWidget);
+      expect(find.byKey(const Key('model-setup-dialog')), findsNothing);
 
       await _openSettings(tester);
       expect(find.byKey(const Key('settings-remote')), findsOneWidget);

@@ -5,6 +5,8 @@ import 'package:sillydraft/app/app.dart';
 import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 void main() {
@@ -25,6 +27,7 @@ void main() {
     await repo.createNovel(title: '旧稿');
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
 
     await tester.tap(findAction('作品操作'));
     await tester.pumpAndSettle();

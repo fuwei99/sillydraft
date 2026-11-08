@@ -14,6 +14,7 @@ import 'package:sillydraft/features/resources/resource_library_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
 import '../test/support/finders.dart';
+import '../test/support/model_setup.dart';
 
 import 'package:sillydraft/app/widgets.dart';
 
@@ -88,6 +89,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await waitFor(find.text('先离线使用'));
+    await skipModelSetup(tester);
     await waitFor(find.text(novel.title));
     await tester.tap(find.text(novel.title));
     await tester.pumpAndSettle();

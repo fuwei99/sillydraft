@@ -6,6 +6,8 @@ import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 const _sections = Key('workspace-sections');
@@ -44,6 +46,7 @@ Future<(AppServices, Novel)> _openNovel(
   );
   await tester.pumpWidget(SillyDraftApp(services: services));
   await tester.pumpAndSettle();
+  await skipModelSetup(tester);
   await tester.tap(find.text('雾港来信'));
   await tester.pumpAndSettle();
   return (services, novel);
@@ -307,6 +310,7 @@ void main() {
     );
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
     expect(find.textContaining('待审'), findsNothing);
     await tester.tap(find.text('候选测试'));
     await tester.pumpAndSettle();

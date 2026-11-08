@@ -14,6 +14,8 @@ import 'package:sillydraft/features/illustrations/illustration_gallery.dart';
 import 'package:sillydraft/features/illustrations/illustration_request.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import '../packages/sillydraft_core/test/support/image_scene.dart';
 import 'support/finders.dart';
 import 'support/host.dart';
@@ -342,6 +344,7 @@ void main() {
 
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text('带插画的小说'));
       await tester.pumpAndSettle();
       await editChapter(tester, chapter.title);

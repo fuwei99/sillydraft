@@ -26,7 +26,7 @@ import 'services.dart';
 import 'task_activity.dart';
 import 'theme.dart';
 import 'tracking.dart';
-import 'widgets.dart' show confirmAction, showError;
+import 'widgets.dart' show AppDialog, confirmAction, showAppDialog, showError;
 
 class SillyDraftApp extends StatefulWidget {
   const SillyDraftApp({super.key, required this.services, this.openLocal});
@@ -62,13 +62,14 @@ class _SillyDraftAppState extends State<SillyDraftApp> {
         libraryHostProvider.overrideWithValue(_host),
         screenAwakeProvider.overrideWithValue(_awake),
       ],
-      child: const _App(),
+      child: _App(showModelSetup: identical(_host.services, widget.services)),
     ),
   );
 }
 
 class _App extends ConsumerStatefulWidget {
-  const _App();
+  const _App({required this.showModelSetup});
+  final bool showModelSetup;
   @override
   ConsumerState<_App> createState() => _AppState();
 }
@@ -171,9 +172,64 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
     _awake = ref.read(screenAwakeProvider);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _navigator.currentContext;
-      if (context != null) unawaited(checkUpdates(context, ref));
+      if (mounted) unawaited(_startupPrompts());
     });
+  }
+
+  Future<void> _startupPrompts() async {
+    final navigator = _navigator.currentState;
+    if (navigator == null) return;
+    final services = ref.read(servicesProvider);
+    // Library switches rebuild this state; setup belongs to the initial launch.
+    if (widget.showModelSetup && services.remote == null) {
+      try {
+        final connections = await services.connections();
+        if (!mounted || !navigator.mounted) return;
+        if (connections.isEmpty && !navigator.canPop()) {
+          final configure = await showAppDialog<bool>(
+            context: navigator.context,
+            builder: (context) => AppDialog(
+              key: const Key('model-setup-dialog'),
+              title: const Text('连接模型，开始 AI 创作'),
+              body: const Text(
+                '还没有配置模型。只需两步，就能使用 AI 写作和编辑：\n\n'
+                '1. 在「模型」设置中添加连接，填写模型服务的信息。\n'
+                '2. 为写作、编辑等任务选择要使用的模型。\n\n'
+                '也可以先离线使用，随时新建、编辑和阅读作品。',
+              ),
+              actions: [
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.pop(context, false),
+                  child: const Text('先离线使用'),
+                ),
+                FButton(
+                  onPress: () => Navigator.pop(context, true),
+                  child: const Text('去配置'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted || !navigator.mounted) return;
+          if (configure == true) {
+            await navigator.push<void>(
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/settings'),
+                builder: (_) =>
+                    const SettingsScreen(initialTab: SettingsTab.models),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted && navigator.mounted) {
+          showError(navigator.context, '读取模型配置失败：$e');
+        }
+      }
+    }
+    if (mounted && navigator.mounted && !navigator.canPop()) {
+      await checkUpdates(navigator.context, ref);
+    }
   }
 
   @override

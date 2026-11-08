@@ -11,6 +11,9 @@ import 'package:sillydraft/features/editor/editor_screen.dart';
 import 'package:sillydraft/features/editor/workspace_screen.dart';
 import 'package:sillydraft/features/reader/reader_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
+
+import 'support/model_setup.dart';
+
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class _RecordingWakelock extends WakelockPlusMacOSPlugin {
@@ -52,6 +55,7 @@ void main() {
       );
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       final navigator = tester.state<NavigatorState>(
         find.byType(Navigator).first,
       );
@@ -131,6 +135,7 @@ void main() {
     );
     await tester.pumpWidget(SillyDraftApp(services: services));
     await pumpActivity(tester);
+    await skipModelSetup(tester);
     var saved = 0;
     final owner = Object();
     services.registerDraft(owner, () async {
@@ -195,6 +200,7 @@ void main() {
       );
       await tester.pumpWidget(SillyDraftApp(services: services));
       await pumpActivity(tester);
+      await skipModelSetup(tester);
       await tester.tap(
         find.descendant(
           of: find.byType(AppBottomBar),
@@ -250,6 +256,7 @@ void main() {
         );
         await tester.pumpWidget(SillyDraftApp(services: services));
         await tester.pumpAndSettle();
+        await skipModelSetup(tester);
         final navigator = tester.state<NavigatorState>(
           find.byType(Navigator).first,
         );
@@ -318,6 +325,7 @@ void main() {
         final wakeCalls = wakelock.calls;
         await tester.pumpWidget(SillyDraftApp(services: services));
         await tester.pumpAndSettle();
+        await skipModelSetup(tester);
         expect(find.byKey(const Key('task-activity')), findsNothing);
         await tester.enterText(find.byType(EditableText), '保留搜索');
         await tester.pump();

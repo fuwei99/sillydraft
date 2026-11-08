@@ -8,6 +8,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/features/remote/share_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 void main() {
   final link = ReceiveLink(
     host: '192.168.1.5',
@@ -21,6 +23,7 @@ void main() {
   Future<NavigatorState> app(WidgetTester tester, AppServices services) async {
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
     return tester.state<NavigatorState>(find.byType(Navigator).first);
   }
 

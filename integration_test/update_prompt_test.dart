@@ -11,6 +11,8 @@ import 'package:sillydraft/app/app.dart';
 import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import '../test/support/model_setup.dart';
+
 /// Screenshots of the update prompt against a local stand-in for GitHub:
 ///
 ///   flutter drive --driver=test_driver/native_verification.dart \
@@ -91,6 +93,9 @@ void main() {
       ),
     );
     // The automatic check runs after the first frame.
+    await waitFor(find.text('先离线使用'));
+    expect(find.text('发现新版本 0.2.0'), findsNothing);
+    await skipModelSetup(tester);
     await waitFor(find.text('发现新版本 0.2.0'));
     await capture('update-dialog');
     await tester.tap(find.text('稍后'));

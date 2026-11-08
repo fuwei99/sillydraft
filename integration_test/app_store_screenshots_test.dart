@@ -17,6 +17,7 @@ import 'package:sillydraft/features/illustrations/illustration_detail.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
 import '../test/support/finders.dart';
+import '../test/support/model_setup.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +70,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final deadline = DateTime.now().add(const Duration(seconds: 15));
+    while (find.text('先离线使用').evaluate().isEmpty &&
+        DateTime.now().isBefore(deadline)) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await skipModelSetup(tester);
     await tester.tap(find.text(novel.title));
     await tester.pumpAndSettle();
     await capture('workspace');

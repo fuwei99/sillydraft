@@ -5,6 +5,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 const _rail = Key('workspace-sections');
@@ -86,6 +88,7 @@ void main() {
       );
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text(novel.title));
       await tester.pumpAndSettle();
 
@@ -188,6 +191,7 @@ void main() {
       }
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text('雾港来信'));
       await tester.pumpAndSettle();
 

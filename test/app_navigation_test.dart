@@ -7,6 +7,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/features/settings/settings_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 void main() {
   for (final wide in [true, false]) {
     testWidgets(
@@ -29,6 +31,7 @@ void main() {
         });
         await tester.pumpWidget(SillyDraftApp(services: services));
         await tester.pumpAndSettle();
+        await skipModelSetup(tester);
 
         final navigation = find.byType(wide ? AppSidebar : AppBottomBar);
         Future<void> select(String label, int index) async {
@@ -132,6 +135,7 @@ void main() {
     });
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
 
     final commands = tester.widget<DesktopCommands>(
       find.byType(DesktopCommands),

@@ -7,6 +7,8 @@ import 'package:sillydraft/app/app.dart';
 import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 import 'package:sillydraft/app/widgets.dart';
@@ -61,6 +63,7 @@ void main() {
       final f = await fixture(tester);
       await tester.pumpWidget(SillyDraftApp(services: f.services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text(f.novel.title));
       await tester.pumpAndSettle();
       await editChapter(tester, '港口');
@@ -111,6 +114,7 @@ void main() {
       final f = await fixture(tester);
       await tester.pumpWidget(SillyDraftApp(services: f.services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       final owner = Object();
       var saved = 0;
       addTearDown(() => f.services.unregisterDraft(owner));
@@ -147,6 +151,7 @@ void main() {
         final f = await fixture(tester);
         await tester.pumpWidget(SillyDraftApp(services: f.services));
         await tester.pumpAndSettle();
+        await skipModelSetup(tester);
         await tester.tap(find.text(f.novel.title));
         await tester.pumpAndSettle();
         final divider = find.byKey(Key(dividerKey)),
@@ -176,6 +181,7 @@ void main() {
       final f = await fixture(tester);
       await tester.pumpWidget(SillyDraftApp(services: f.services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text(f.novel.title));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-reader')));
@@ -209,6 +215,7 @@ void main() {
       await f.services.repository.setSetting('appearance', {'mode': 'dark'});
       await tester.pumpWidget(SillyDraftApp(services: f.services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text(f.novel.title));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-reader')));
@@ -238,6 +245,7 @@ void main() {
       final f = await fixture(tester);
       await tester.pumpWidget(SillyDraftApp(services: f.services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       expect(tester.takeException(), isNull);
       await tester.tap(
         find.descendant(

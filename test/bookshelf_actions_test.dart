@@ -9,6 +9,8 @@ import 'package:sillydraft/features/editor/workspace_screen.dart';
 import 'package:sillydraft/features/transfer/transfer_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 void main() {
@@ -31,6 +33,7 @@ void main() {
       final novel = await repo.createNovel(title: '待整理的作品');
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
 
       Future<void> openMenu(String title) async {
         final menu = find.descendant(

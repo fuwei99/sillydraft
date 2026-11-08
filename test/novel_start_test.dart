@@ -9,6 +9,9 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/features/bookshelf/bookshelf_screen.dart';
 import 'package:sillydraft/features/bookshelf/novel_start.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
+
+import 'support/model_setup.dart';
+
 import 'package:sillydraft/app/widgets.dart';
 
 Future<AppServices> _launch(WidgetTester tester) async {
@@ -27,6 +30,7 @@ Future<AppServices> _launch(WidgetTester tester) async {
   });
   await tester.pumpWidget(SillyDraftApp(services: services));
   await tester.pumpAndSettle();
+  await skipModelSetup(tester);
   return services;
 }
 

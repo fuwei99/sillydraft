@@ -7,6 +7,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 import 'support/host.dart';
 
@@ -90,6 +92,7 @@ void main() {
       addTearDown(services.close);
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text('阅读位置测试'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-reader')));

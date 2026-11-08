@@ -9,6 +9,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/features/remote/hosting_screen.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 void main() {
   testWidgets('sharing on shows the pairing code and link', (tester) async {
     PackageInfo.setMockInitialValues(
@@ -39,6 +41,7 @@ void main() {
     await tester.runAsync(() => services.hosting.setEnabled(true, port: 0));
     await tester.pumpWidget(SillyDraftApp(services: services));
     await tester.pumpAndSettle();
+    await skipModelSetup(tester);
     tester
         .state<NavigatorState>(find.byType(Navigator).first)
         .push(

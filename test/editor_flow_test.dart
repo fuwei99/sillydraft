@@ -6,6 +6,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/app/widgets.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 import 'support/finders.dart';
 
 void main() {
@@ -26,6 +28,7 @@ void main() {
       addTearDown(services.close);
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
       await tester.tap(find.text('中文输入测试'));
       await tester.pumpAndSettle();
       await editChapter(tester, '第一章');
@@ -291,6 +294,7 @@ Future<(StoryRepository, Chapter)> _openEditor(
   });
   await tester.pumpWidget(SillyDraftApp(services: services));
   await tester.pumpAndSettle();
+  await skipModelSetup(tester);
   await tester.tap(find.text('工具栏测试'));
   await tester.pumpAndSettle();
   await editChapter(tester, '第一章');

@@ -6,9 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sillydraft/app/app.dart';
 import 'package:sillydraft/app/home_screen.dart';
 import 'package:sillydraft/app/services.dart';
-import 'package:sillydraft/app/widgets.dart' show AppBottomBar;
+import 'package:sillydraft/app/widgets.dart' show AppBackButton, AppBottomBar;
 import 'package:sillydraft/features/settings/settings_screen.dart';
 import 'package:sillydraft/features/update/update_prompt.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
@@ -200,6 +201,47 @@ void main() {
     expect(find.text('SillyDraft 0.1.0 (1)'), findsOneWidget);
     expect(find.byKey(const Key('settings-check-update')), findsNothing);
     expect(find.byKey(const Key('settings-auto-update')), findsNothing);
+  });
+
+  testWidgets('startup waits for model setup before offering an update', (
+    tester,
+  ) async {
+    var requests = 0;
+    final services = AppServices(
+      repository: StoryRepository.memory(),
+      secrets: MemorySecrets(),
+      updateEndpoint: await serve(tester, onRequest: () => requests++),
+    );
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(services.close);
+    });
+    await tester.pumpWidget(SillyDraftApp(services: services));
+    await tester.pumpAndSettle();
+    expect(find.text('连接模型，开始 AI 创作'), findsOneWidget);
+    expect(requests, 0);
+    await tester.tap(find.text('去配置'));
+    await tester.pumpAndSettle();
+    expect(find.text('添加连接'), findsOneWidget);
+    expect(requests, 0);
+    // Startup retains the fake zone; advance its timers alongside real HTTP.
+    await tester.runAsync(() async {
+      await tester.tap(find.byType(AppBackButton));
+      for (
+        var i = 0;
+        i < 50 && find.text('发现新版本 0.2.0').evaluate().isEmpty;
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+    });
+    await tester.pumpAndSettle();
+    expect(requests, 1);
+    expect(find.text('发现新版本 0.2.0'), findsOneWidget);
+    expect(find.byKey(const Key('model-setup-dialog')), findsNothing);
+    await tester.tap(find.text('稍后'));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('manual check offers a newer release and can skip it', (

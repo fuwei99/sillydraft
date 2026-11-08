@@ -5,6 +5,8 @@ import 'package:sillydraft/app/services.dart';
 import 'package:sillydraft/features/illustrations/asset_image.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'support/model_setup.dart';
+
 void main() {
   for (final hasCover in [false, true]) {
     testWidgets('shelf identifies a work with cover=$hasCover', (tester) async {
@@ -33,6 +35,7 @@ void main() {
       }
       await tester.pumpWidget(SillyDraftApp(services: services));
       await tester.pumpAndSettle();
+      await skipModelSetup(tester);
 
       expect(find.text(novel.title), findsOneWidget);
       expect(find.text(novel.synopsis), findsOneWidget);
