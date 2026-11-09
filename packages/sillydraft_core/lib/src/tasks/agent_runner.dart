@@ -424,6 +424,10 @@ extension _AgentExecution on TaskRunner {
       for (final s in input['skills'] as List? ?? const [])
         AgentSkill.fromJson(s as Map<String, dynamic>),
     ];
+    final maybeWorkspace = this.workspace;
+    final workspace = maybeWorkspace != null && maybeWorkspace.available
+        ? maybeWorkspace
+        : null;
     final illustrationBatch = input['illustrationBatch'] == true;
     final illustrationOnly =
         input['illustrationOnly'] == true || illustrationBatch;
@@ -470,6 +474,7 @@ extension _AgentExecution on TaskRunner {
           activeSkills: (input['activeSkills'] as List? ?? const [])
               .whereType<String>(),
         ),
+      if (!illustrationOnly && workspace != null) ...workspace.tools,
     ];
     var canWrite = !illustrationOnly;
     final writtenChapters = <String, String>{};
@@ -484,6 +489,16 @@ extension _AgentExecution on TaskRunner {
         tools: tools,
         imageRequired: illustrationOnly,
         execute: (call) async {
+          if (workspace != null && workspace.handles(call.name)) {
+            if (!canWrite) {
+              return {
+                'error': '本轮写作已停止，请作者处理未写入的正文或版本变化后重新发起请求。',
+                'code': 'writing_stopped',
+                'retryable': false,
+              };
+            }
+            return workspace.call(call.name, call.arguments);
+          }
           if ((illustrationBatch && call.name == 'generate_image') ||
               (!canBatchImages && call.name == 'generate_images')) {
             return {'error': '请使用本轮提供的生图工具', 'code': 'tool_not_allowed'};
@@ -524,7 +539,10 @@ extension _AgentExecution on TaskRunner {
               (call.name == 'propose_chapter' && result['accepted'] == false)) {
             canWrite = false;
             tools.removeWhere(
-              (tool) => writingTools.contains(tool['function']['name']),
+              (tool) =>
+                  writingTools.contains(tool['function']['name']) ||
+                  (workspace != null &&
+                      workspace.handles(tool['function']['name'] as String)),
             );
           }
           return result;

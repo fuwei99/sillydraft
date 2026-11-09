@@ -20,11 +20,17 @@ import '../tasks/task_runner.dart';
 import 'illustration_service.dart';
 import 'image_prompt.dart';
 import 'skills.dart';
+import 'workspace_toolbox.dart';
 
 final class EditorAgent {
-  const EditorAgent({required this.repository, required this.runner});
+  const EditorAgent({
+    required this.repository,
+    required this.runner,
+    this.workspace,
+  });
   final StoryRepository repository;
   final TaskControl runner;
+  final WorkspaceToolbox? workspace;
 
   Future<GenerationTask> send({
     required String conversationId,
@@ -456,9 +462,17 @@ final class EditorAgent {
         ],
       };
     }
+    final localWorkspace = workspace;
+    final workspacePrompt =
+        illustrationOnly || localWorkspace == null || !localWorkspace.available
+        ? ''
+        : '\n\n${localWorkspace.prompt}';
     var request = ProviderRequest(
       messages: [
-        {'role': 'system', 'content': illustrationOnly ? rules : instructions},
+        {
+          'role': 'system',
+          'content': illustrationOnly ? rules : '$instructions$workspacePrompt',
+        },
         if (!illustrationOnly) ...skillMessages,
         if (illustrationContext != null)
           {
@@ -535,7 +549,7 @@ final class EditorAgent {
             'content':
                 '$rules\n以下由作者选择的预设决定你的语气、身份与写作偏好；'
                 '但工具权限和正文自动写入等编辑规则始终以本段为准。'
-                '${skillCatalog(skills)}',
+                '${skillCatalog(skills)}$workspacePrompt',
           },
           ...skillMessages,
           for (final m in compiled.messages) m.toJson(),

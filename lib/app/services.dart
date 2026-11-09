@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sillydraft_core/sillydraft_core.dart';
 
+import 'android_workspace.dart';
 import 'hosting.dart';
 
 abstract interface class SecretStore {
@@ -193,6 +194,7 @@ final class AppServices {
     required this.secrets,
     this.dataDirectory,
     this.updateEndpoint,
+    this.workspace,
     ProviderFactory? modelProviderFactory,
     ImageProviderFactory? imageProviderFactory,
   }) : remote = null,
@@ -208,7 +210,7 @@ final class AppServices {
       providerFactory: modelProviderFactory ?? provider,
       imageProviderFactory: imageProviderFactory ?? imageProvider,
       assetLibrary: assets,
-    );
+    )..workspace = workspace;
     library = ResourceLibrary(repository: repository, keyProvider: resourceKey);
     _wire();
   }
@@ -224,6 +226,7 @@ final class AppServices {
   }) : repository = session.repository,
        remote = session,
        dataDirectory = null,
+       workspace = null,
        _modelProviderFactory = null {
     assets = AssetLibrary(
       repository: repository,
@@ -246,7 +249,11 @@ final class AppServices {
   void _wire() {
     writing = WritingService(repository: repository, runner: runner);
     sidecar = SidecarAgent(repository: repository, runner: runner);
-    editor = EditorAgent(repository: repository, runner: runner);
+    editor = EditorAgent(
+      repository: repository,
+      runner: runner,
+      workspace: workspace,
+    );
     illustrations = IllustrationService(repository: repository, runner: runner);
     personas = PersonaService(repository: repository, runner: runner);
   }
@@ -254,6 +261,9 @@ final class AppServices {
   final StoryRepository repository;
   final SecretStore secrets;
   final Directory? dataDirectory;
+
+  /// The Android PRoot workspace, when this device has one installed.
+  final WorkspaceToolbox? workspace;
 
   /// The desktop this library belongs to; null for this device's own.
   final RemoteSession? remote;
@@ -344,6 +354,7 @@ final class AppServices {
         updateEndpoint: checkUpdates && !Platform.isIOS
             ? latestReleaseUrl
             : null,
+        workspace: await AndroidWorkspace.load(),
       );
       services._libraryLock = lock;
       await services.runner.recoverInterrupted();

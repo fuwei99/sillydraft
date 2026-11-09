@@ -7,6 +7,7 @@ import '../agent/editor_agent.dart';
 import '../agent/illustration_service.dart';
 import '../agent/sidecar_agent.dart';
 import '../agent/skills.dart';
+import '../agent/workspace_toolbox.dart';
 import '../agent/writing_service.dart';
 import '../assets/asset_library.dart';
 import '../model/asset.dart';
@@ -102,6 +103,11 @@ abstract interface class TaskControl {
     required bool approved,
   });
   Future<void> close();
+
+  /// The local workspace, when this process can reach one. A remote library
+  /// runs its tasks on the desktop, so it has none.
+  WorkspaceToolbox? get workspace;
+  set workspace(WorkspaceToolbox? value);
 }
 
 final class TaskRunner implements TaskControl {
@@ -118,6 +124,9 @@ final class TaskRunner implements TaskControl {
   final ImageProviderFactory? imageProviderFactory;
   @override
   final AssetLibrary? assetLibrary;
+
+  @override
+  WorkspaceToolbox? workspace;
   final _running = <String, Future<void>>{};
   final _agentTails = <String, Future<void>>{};
   final _cancellations = <String, GenerationCancellation>{};

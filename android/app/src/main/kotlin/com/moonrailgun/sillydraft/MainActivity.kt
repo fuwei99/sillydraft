@@ -45,6 +45,28 @@ class MainActivity : FlutterActivity() {
                         result.success(false)
                     }
                 }
+                "extractRootfs" -> {
+                    val archive = call.argument<String>("archive")
+                    val target = call.argument<String>("target")
+                    if (archive == null || target == null) {
+                        result.error("bad_args", "archive and target are required", null)
+                    } else {
+                        Thread {
+                            try {
+                                RootfsExtractor.extract(File(archive), File(target))
+                                runOnUiThread { result.success(true) }
+                            } catch (e: Exception) {
+                                runOnUiThread {
+                                    result.error(
+                                        "extract_failed",
+                                        e.message ?: e.toString(),
+                                        null,
+                                    )
+                                }
+                            }
+                        }.start()
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

@@ -123,24 +123,10 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
       client = null;
 
       if (mounted) setState(() => _status = '正在解压…');
-      var result = await Process.run('/system/bin/tar', [
-        '-xzf',
-        archive.path,
-        '-C',
-        root.path,
-      ]);
-      if (result.exitCode != 0) {
-        result = await Process.run('/system/bin/toybox', [
-          'tar',
-          '-xzf',
-          archive.path,
-          '-C',
-          root.path,
-        ]);
-      }
-      if (result.exitCode != 0) {
-        throw StateError('解压失败：${result.stderr}');
-      }
+      await _channel.invokeMethod<bool>('extractRootfs', {
+        'archive': archive.path,
+        'target': root.path,
+      });
       await archive.delete();
       final ready = await File('$_filesDir/rootfs/bin/sh').exists();
       if (!mounted) return;

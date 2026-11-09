@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'mounts.dart';
 import 'paths.dart';
+import 'proot.dart';
 
 final class ShellRequest {
   const ShellRequest({
@@ -80,35 +81,11 @@ final class HostShellRunner implements ShellRunner {
           : ['/bin/sh', '-c', request.command],
       workingDirectory: resolved.hostPath,
     );
-
-    final out = _Collector(maxOutputBytes);
-    final err = _Collector(maxOutputBytes);
-    final outDone = process.stdout.forEach(out.add);
-    final errDone = process.stderr.forEach(err.add);
-
-    var timedOut = false;
-    final exitCode = await process.exitCode.timeout(
+    return _collect(
+      process,
       request.timeout,
-      onTimeout: () {
-        timedOut = true;
-        if (setsid != null) {
-          Process.killPid(-process.pid, ProcessSignal.sigkill);
-        } else {
-          process.kill(ProcessSignal.sigkill);
-        }
-        return -1;
-      },
-    );
-    // A grandchild may still hold the pipes; do not wait on it forever.
-    await Future.wait([outDone, errDone])
-        .timeout(const Duration(seconds: 2), onTimeout: () => const <void>[]);
-
-    return ShellResult(
-      exitCode: exitCode,
-      stdout: out.text,
-      stderr: err.text,
-      timedOut: timedOut,
-      truncated: out.truncated || err.truncated,
+      maxOutputBytes,
+      killGroup: setsid != null,
     );
   }
 
@@ -118,6 +95,76 @@ final class HostShellRunner implements ShellRunner {
     }
     return null;
   }
+}
+
+/// Runs commands inside the PRoot rootfs on Android.
+final class ProotShellRunner implements ShellRunner {
+  ProotShellRunner({
+    required this.builder,
+    required this.table,
+    this.maxOutputBytes = 256 * 1024,
+  });
+
+  final ProotCommandBuilder builder;
+  final MountTable table;
+  final int maxOutputBytes;
+
+  @override
+  Future<ShellResult> run(ShellRequest request) async {
+    if (request.background) {
+      throw UnsupportedError('后台命令需要 Android 端的前台服务');
+    }
+    final command = builder.build(
+      table: table,
+      command: request.command,
+      cwd: request.cwd,
+    );
+    final process = await Process.start(
+      command.executable,
+      command.args,
+      environment: command.environment,
+      workingDirectory: command.workingDirectory,
+    );
+    // PRoot's --kill-on-exit takes the guest tree down with this process.
+    return _collect(process, request.timeout, maxOutputBytes);
+  }
+}
+
+Future<ShellResult> _collect(
+  Process process,
+  Duration timeout,
+  int maxOutputBytes, {
+  bool killGroup = false,
+}) async {
+  final out = _Collector(maxOutputBytes);
+  final err = _Collector(maxOutputBytes);
+  final outDone = process.stdout.forEach(out.add);
+  final errDone = process.stderr.forEach(err.add);
+
+  var timedOut = false;
+  final exitCode = await process.exitCode.timeout(
+    timeout,
+    onTimeout: () {
+      timedOut = true;
+      if (killGroup) {
+        Process.killPid(-process.pid, ProcessSignal.sigkill);
+      } else {
+        process.kill(ProcessSignal.sigkill);
+      }
+      return -1;
+    },
+  );
+  // A grandchild may still hold the pipes; do not wait on it forever.
+  await Future.wait([outDone, errDone])
+      .timeout(const Duration(seconds: 2), onTimeout: () => const <void>[]);
+
+  return ShellResult(
+    exitCode: exitCode,
+    stdout: out.text,
+    stderr: err.text,
+    timedOut: timedOut,
+    truncated: out.truncated || err.truncated,
+  );
 }
 
 /// Keeps the first and last part of a stream, so both the beginning of a

@@ -4,6 +4,7 @@ import '../assets/asset_library.dart';
 import '../model/task.dart';
 import '../storage/story_repository.dart';
 import '../tasks/task_runner.dart';
+import '../agent/workspace_toolbox.dart';
 import 'reconnecting_executor.dart';
 import 'remote_session.dart';
 
@@ -25,6 +26,14 @@ final class RemoteTaskControl implements TaskControl {
   final AssetLibrary? assetLibrary;
 
   StoryRepository get _repository => session.repository;
+
+  /// Tasks of a remote library run on the desktop; the phone has no workspace
+  /// of its own to offer them.
+  @override
+  WorkspaceToolbox? get workspace => null;
+
+  @override
+  set workspace(WorkspaceToolbox? value) {}
 
   /// The desktop's tasks are the desktop's: a phone never marks them.
   @override
