@@ -8,3 +8,6 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    # Separate package with its own analysis_options and dev dependencies;
+    # CI runs `dart analyze` inside it.
+    - packages/sillydraft_workspace/**
