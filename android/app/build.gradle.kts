@@ -60,7 +60,9 @@ android {
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = rootProject.file(releaseStore!!)
+                val path = releaseStore!!
+                storeFile = rootProject.file(path)
+                storeType = if (path.endsWith(".p12", ignoreCase = true)) "PKCS12" else "JKS"
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
                 keyPassword = releaseKeyPassword

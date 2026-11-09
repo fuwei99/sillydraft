@@ -30,9 +30,16 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: flutter pub get
+      - name: Decode signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SILLYDRAFT_KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/release.p12
       - run: flutter build apk --release
         env:
-          SILLYDRAFT_DEVELOPMENT_SIGNING: 'true'
+          SILLYDRAFT_KEYSTORE: release.p12
+          SILLYDRAFT_STORE_PASSWORD: ${{ secrets.SILLYDRAFT_STORE_PASSWORD }}
+          SILLYDRAFT_KEY_ALIAS: ${{ secrets.SILLYDRAFT_KEY_ALIAS }}
+          SILLYDRAFT_KEY_PASSWORD: ${{ secrets.SILLYDRAFT_KEY_PASSWORD }}
       - uses: actions/upload-artifact@v4
         with:
           name: sillydraft-workspace-apk
