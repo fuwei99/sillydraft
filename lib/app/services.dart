@@ -360,10 +360,12 @@ final class AppServices {
       );
       services._libraryLock = lock;
       await services.runner.recoverInterrupted();
-      final workspace = services.workspace;
-      if (workspace != null) {
+      final localWorkspace = services.workspace;
+      if (localWorkspace != null) {
         unawaited(
-          workspace.syncFromFiles().then((_) => workspace.syncToFiles()),
+          localWorkspace.syncFromFiles().then(
+            (_) => localWorkspace.syncToFiles(),
+          ),
         );
       }
       // A desktop shares its library again when the author left it on.
