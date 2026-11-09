@@ -1,0 +1,3 @@
+libproot_exec.so and libproot_loader.so are the PRoot runtime shipped by
+RikkaHub (https://github.com/rikkahub/rikkahub), licensed AGPL-3.0.
+They are included here for a personal, non-distributed build.

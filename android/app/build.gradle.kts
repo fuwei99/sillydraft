@@ -49,6 +49,14 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // PRoot is executed from nativeLibraryDir; without this the .so
+            // stays inside the APK and is only mmap-loaded.
+            useLegacyPackaging = true
+        }
+    }
+
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {

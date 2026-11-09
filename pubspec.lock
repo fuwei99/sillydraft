@@ -995,6 +995,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  sillydraft_workspace:
+    dependency: "direct main"
+    description:
+      path: "packages/sillydraft_workspace"
+      relative: true
+    source: path
+    version: "0.1.0"
   sky_engine:
     dependency: transitive
     description: flutter

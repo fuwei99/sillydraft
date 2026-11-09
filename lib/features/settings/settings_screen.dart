@@ -15,6 +15,7 @@ import '../remote/library_switcher.dart';
 import '../remote/share_screen.dart';
 import '../skills/skills_screen.dart';
 import '../update/update_prompt.dart';
+import '../workspace/workspace_screen.dart';
 import 'comfy_workflow_editor.dart';
 import 'default_preset_setting.dart';
 import 'model_select.dart';
@@ -45,6 +46,7 @@ enum SettingsTab {
   general('通用'),
   models('模型'),
   creation('创作'),
+  workspace('工作区'),
   about('关于');
 
   const SettingsTab(this.label);
@@ -88,6 +90,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     void setHtml(bool value) =>
         ref.read(repositoryProvider).setSetting('html', {'render': value});
     final sections = <SettingsTab, List<Widget>>{
+      SettingsTab.workspace: [const WorkspaceSection()],
       SettingsTab.general: [
         Text(
           '让工具适合你的写作方式',

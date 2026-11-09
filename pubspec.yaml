@@ -14,6 +14,8 @@ dependencies:
     sdk: flutter
   sillydraft_core:
     path: packages/sillydraft_core
+  sillydraft_workspace:
+    path: packages/sillydraft_workspace
   flutter_riverpod: ^3.4.3
   # Pinned: DevtoolHistoryTrim reaches into its internal debug history, so
   # an upgrade must re-check lib/app/devtool_trim.dart.
