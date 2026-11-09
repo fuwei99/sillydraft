@@ -174,6 +174,9 @@ final class EditorAgent {
 
   /// Freeze the turn only when it reaches the front of its conversation.
   Future<Map<String, dynamic>> prepare(GenerationTask task) async {
+    // Markdown edited outside the app becomes a revision before the editor
+    // reads the story, so the model always sees the author's latest text.
+    await workspace?.syncFromFiles();
     final input = task.input;
     final pending = jsonObject(input['pendingAgent'], 'pendingAgent');
     final conversationId = input['conversationId'] as String;

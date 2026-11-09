@@ -10,6 +10,7 @@ import 'package:sillydraft_workspace/sillydraft_workspace.dart';
 /// `sillydraft/workspace` channel.
 final class AndroidWorkspace implements WorkspaceToolbox {
   AndroidWorkspace._({
+    required this.repository,
     required this.nativeLibraryDir,
     required this.filesDir,
     required this.cacheDir,
@@ -18,17 +19,24 @@ final class AndroidWorkspace implements WorkspaceToolbox {
 
   static const _channel = MethodChannel('sillydraft/workspace');
 
+  final StoryRepository repository;
   final String nativeLibraryDir;
   final String filesDir;
   final String cacheDir;
   final String documentsRoot;
 
+  LibraryFiles get _files =>
+      LibraryFiles(repository: repository, root: Directory(documentsRoot));
+
   MountTable? _table;
   WorkspaceTools? _tools;
+  bool _exported = false;
 
   /// Null on every non-Android platform, and on Android before the channel
   /// answers.
-  static Future<AndroidWorkspace?> load() async {
+  static Future<AndroidWorkspace?> load({
+    required StoryRepository repository,
+  }) async {
     if (!Platform.isAndroid) return null;
     try {
       final nativeLibraryDir = await _channel.invokeMethod<String>(
@@ -46,6 +54,7 @@ final class AndroidWorkspace implements WorkspaceToolbox {
         return null;
       }
       return AndroidWorkspace._(
+        repository: repository,
         nativeLibraryDir: nativeLibraryDir,
         filesDir: filesDir,
         cacheDir: cacheDir,
@@ -95,6 +104,29 @@ final class AndroidWorkspace implements WorkspaceToolbox {
 
   @override
   bool handles(String name) => _names.contains(name);
+
+  @override
+  Future<void> syncToFiles() async {
+    try {
+      if (_exported) {
+        await _files.exportChanged();
+      } else {
+        await _files.exportAll();
+        _exported = true;
+      }
+    } catch (_) {
+      // No all-files access yet, or the folder vanished.
+    }
+  }
+
+  @override
+  Future<void> syncFromFiles() async {
+    try {
+      await _files.importChanged();
+    } catch (_) {
+      // A malformed file must not break the editor turn.
+    }
+  }
 
   @override
   Future<Map<String, dynamic>> call(

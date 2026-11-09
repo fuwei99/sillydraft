@@ -347,17 +347,25 @@ final class AppServices {
         // Keys still in the keychain are read on demand; retried next launch.
         stderr.writeln('SillyDraft: keychain migration postponed: $e');
       }
+      final repository = StoryRepository.open('${dir.path}/library.sqlite');
+      final workspace = await AndroidWorkspace.load(repository: repository);
       services = AppServices(
-        repository: StoryRepository.open('${dir.path}/library.sqlite'),
+        repository: repository,
         secrets: secrets,
         dataDirectory: dir,
         updateEndpoint: checkUpdates && !Platform.isIOS
             ? latestReleaseUrl
             : null,
-        workspace: await AndroidWorkspace.load(),
+        workspace: workspace,
       );
       services._libraryLock = lock;
       await services.runner.recoverInterrupted();
+      final workspace = services.workspace;
+      if (workspace != null) {
+        unawaited(
+          workspace.syncFromFiles().then((_) => workspace.syncToFiles()),
+        );
+      }
       // A desktop shares its library again when the author left it on.
       if (desktopPlatform) unawaited(services.hosting.restore());
       try {

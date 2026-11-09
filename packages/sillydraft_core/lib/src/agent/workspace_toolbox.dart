@@ -18,4 +18,11 @@ abstract interface class WorkspaceToolbox {
 
   /// Run a workspace tool and return its JSON result.
   Future<Map<String, dynamic>> call(String name, Map<String, dynamic> args);
+
+  /// Write the current library to the public files, so the model and the
+  /// author can read and edit it.
+  Future<void> syncToFiles();
+
+  /// Import Markdown chapters changed outside the app as new revisions.
+  Future<void> syncFromFiles();
 }

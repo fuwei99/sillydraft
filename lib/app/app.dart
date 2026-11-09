@@ -246,7 +246,11 @@ class _AppState extends ConsumerState<_App> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       unawaited(ApplicationTracking.current?.flush());
     }
-    if (state == AppLifecycleState.resumed) unawaited(_awake.refresh());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_awake.refresh());
+      final workspace = ref.read(servicesProvider).workspace;
+      if (workspace != null) unawaited(workspace.syncFromFiles());
+    }
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       unawaited(

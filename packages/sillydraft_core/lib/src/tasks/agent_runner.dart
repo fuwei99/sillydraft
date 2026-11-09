@@ -560,6 +560,7 @@ extension _AgentExecution on TaskRunner {
     } finally {
       // Keep each attempt even when its conversation is edited or regenerated.
       await repository.saveTaskTranscript(task.id, transcript);
+      await workspace?.syncToFiles();
     }
     await _nameConversation(task, provider, cancel);
   }

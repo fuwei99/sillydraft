@@ -4,19 +4,22 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sillydraft_workspace/sillydraft_workspace.dart';
+
+import '../../app/services.dart';
 
 /// Minimal on-device console for the proot workspace. It exists so the APK
 /// can be tested without a desktop: request all-files access, install the
 /// rootfs once, then run commands inside the mount table.
-class WorkspaceSection extends StatefulWidget {
+class WorkspaceSection extends ConsumerStatefulWidget {
   const WorkspaceSection({super.key});
 
   @override
-  State<WorkspaceSection> createState() => _WorkspaceSectionState();
+  ConsumerState<WorkspaceSection> createState() => _WorkspaceSectionState();
 }
 
-class _WorkspaceSectionState extends State<WorkspaceSection> {
+class _WorkspaceSectionState extends ConsumerState<WorkspaceSection> {
   static const _channel = MethodChannel('sillydraft/workspace');
   static const _rootfsUrl =
       'https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/'
@@ -147,6 +150,32 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
     }
   }
 
+  Future<void> _syncToFiles() async {
+    final workspace = ref.read(servicesProvider).workspace;
+    if (workspace == null) {
+      setState(() => _status = '工作区尚未初始化');
+      return;
+    }
+    await workspace.syncToFiles();
+    final written = await Directory('$_documentsRoot/books').exists();
+    if (mounted) {
+      setState(
+        () =>
+            _status = written ? '已写入 Documents/sillydraft' : '写入失败：先授予「所有文件访问」',
+      );
+    }
+  }
+
+  Future<void> _syncFromFiles() async {
+    final workspace = ref.read(servicesProvider).workspace;
+    if (workspace == null) {
+      setState(() => _status = '工作区尚未初始化');
+      return;
+    }
+    await workspace.syncFromFiles();
+    if (mounted) setState(() => _status = '已把文件里的修改导入书库');
+  }
+
   Future<void> _run() async {
     if (_busy) return;
     if (!_rootfsReady) {
@@ -249,6 +278,14 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
             OutlinedButton(
               onPressed: _busy || !_hasAccess ? null : _installRootfs,
               child: Text(_rootfsReady ? '重装 rootfs' : '安装 rootfs'),
+            ),
+            OutlinedButton(
+              onPressed: _busy ? null : _syncToFiles,
+              child: const Text('同步书库到文件'),
+            ),
+            OutlinedButton(
+              onPressed: _busy ? null : _syncFromFiles,
+              child: const Text('从文件导入'),
             ),
           ],
         ),
