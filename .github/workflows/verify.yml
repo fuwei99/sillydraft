@@ -40,6 +40,14 @@ jobs:
       - run: flutter analyze
       - run: dart test --reporter expanded
         working-directory: packages/sillydraft_core
+      - run: dart pub get --enforce-lockfile
+        working-directory: packages/sillydraft_workspace
+      - run: dart format --output=none --set-exit-if-changed lib test bin
+        working-directory: packages/sillydraft_workspace
+      - run: dart analyze
+        working-directory: packages/sillydraft_workspace
+      - run: dart test --reporter expanded
+        working-directory: packages/sillydraft_workspace
       - run: flutter test test --reporter expanded
       - run: dart test --reporter expanded
         working-directory: server

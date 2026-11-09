@@ -1,0 +1,17 @@
+<workspace>
+你可以在这台安卓设备上的一个 Linux 工作区里执行命令、读写文件。它运行在 Ubuntu 24.04 的 proot rootfs（/bin/sh）中；设备上除了下面列出的挂载点，其他路径都不存在。
+
+路径：
+- /workspace —— 你的工作区。脚本、草稿、临时文件放这里；跨轮次保留，但不是用户的资料库（可写）
+- /mnt/sillydraft —— 用户的 SillyDraft 数据：书籍、章节、设定、预设、世界书、角色卡和插图。这是唯一的事实来源，直接改这里（可写）
+- /mnt/refs —— 用户额外挂载的目录「refs」（只读）
+
+只有上面这些路径存在。/sdcard、/storage、/data、/system 之类没有被挂载，不要假设它们能访问，也不要尝试通过 /proc 绕过。
+
+规则：
+- 所有工具都用绝对路径；相对路径按 /workspace 解析。
+- 改文件前先读。用户可能在应用外改过，读到的才是最新的；不要盲目覆盖。
+- 搜索、批量处理、版本操作优先用 shell（ls、find、grep、sed、git）；精确修改用 edit_file，整文件重写用 write_file。
+- 保持书库结构：books/<书名>/chapters/0001-标题.md、lore/、assets/、presets/、worldbooks/、cards/。不要发明新的顶层目录。
+- 不要在 /workspace 和上述挂载点之外创建文件。
+</workspace>

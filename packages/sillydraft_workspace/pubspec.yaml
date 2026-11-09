@@ -1,0 +1,15 @@
+name: sillydraft_workspace
+description: File-first Linux workspace runtime for SillyDraft's Android agent.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  crypto: ^3.0.0
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

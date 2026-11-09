@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "mounts": [
+    {
+      "host": "/storage/emulated/0/Documents/sillydraft",
+      "guest": "/mnt/sillydraft",
+      "mode": "rw",
+      "label": "sillydraft",
+      "builtIn": true
+    },
+    {
+      "host": "/storage/emulated/0/Documents/refs",
+      "guest": "/mnt/refs",
+      "mode": "ro",
+      "label": "refs"
+    }
+  ]
+}
